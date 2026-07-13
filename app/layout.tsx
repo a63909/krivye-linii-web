@@ -35,6 +35,7 @@ const roboto = Roboto({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://web.curvedlines.ru"),
   title: {
     default: "Кривые Линии WEB — сайты, логотипы и цифровой дизайн",
     template: "%s — Кривые Линии WEB",
@@ -52,15 +53,25 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ru_RU",
+    url: "/",
     title: "Кривые Линии WEB — сайты и бренды, которые невозможно перепутать",
     description:
       "Стратегия, дизайн и код в цельной цифровой системе для вашего бизнеса.",
     siteName: "Кривые Линии WEB",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "Кривые Линии WEB — веб-дизайн, разработка и айдентика",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Кривые Линии WEB",
     description: "Сайты, логотипы и цифровой дизайн для бизнеса.",
+    images: ["/opengraph-image"],
   },
   robots: {
     index: true,
