@@ -1199,6 +1199,40 @@ button {
   padding: clamp(24px, 4vw, 48px);
 }
 
+.brief-honeypot {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.brief-status {
+  min-height: 20px;
+  margin: -6px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.brief-status-idle,
+.brief-status-sending {
+  color: rgba(9, 11, 10, 0.55);
+}
+
+.brief-status-success {
+  color: #215f35;
+}
+
+.brief-status-error {
+  color: #8c241f;
+}
+
+.brief-status a {
+  border-bottom: 1px solid currentColor;
+}
+
 .brief-form label:not(.consent-label) {
   display: grid;
   gap: 8px;
@@ -1366,6 +1400,12 @@ button {
   background: var(--periwinkle);
   color: var(--ink);
   transform: translateY(-2px);
+}
+
+.button-dark:disabled {
+  cursor: wait;
+  opacity: 0.65;
+  transform: none;
 }
 
 .site-footer {
