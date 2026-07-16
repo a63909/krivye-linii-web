@@ -175,6 +175,7 @@ function ArrowIcon() {
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [briefStatus, setBriefStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -193,19 +194,34 @@ export default function Home() {
     };
   }, [menuOpen]);
 
-  const submitBrief = (event: FormEvent<HTMLFormElement>) => {
+  const submitBrief = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const name = String(data.get("name") ?? "");
-    const contact = String(data.get("contact") ?? "");
-    const project = String(data.get("project") ?? "");
-    const budget = String(data.get("budget") ?? "");
-    const details = String(data.get("details") ?? "");
-    const subject = encodeURIComponent(`Новый проект — ${project || "Кривые Линии WEB"}`);
-    const body = encodeURIComponent(
-      `Имя: ${name}\nКонтакт: ${contact}\nТип проекта: ${project}\nБюджет: ${budget}\n\nЗадача:\n${details}`,
-    );
-    window.location.href = `mailto:web@curvedlines.ru?subject=${subject}&body=${body}`;
+    const form = event.currentTarget;
+    const data = new FormData(form);
+
+    setBriefStatus("sending");
+
+    try {
+      const response = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: String(data.get("name") ?? ""),
+          contact: String(data.get("contact") ?? ""),
+          project: String(data.get("project") ?? ""),
+          budget: String(data.get("budget") ?? ""),
+          details: String(data.get("details") ?? ""),
+          company: String(data.get("company") ?? ""),
+        }),
+      });
+
+      if (!response.ok) throw new Error("Lead delivery failed");
+
+      form.reset();
+      setBriefStatus("success");
+    } catch {
+      setBriefStatus("error");
+    }
   };
 
   const closeMenu = () => setMenuOpen(false);
@@ -490,6 +506,10 @@ export default function Home() {
           </div>
 
           <form className="brief-form" onSubmit={submitBrief}>
+            <label className="brief-honeypot" aria-hidden="true">
+              <span>Компания</span>
+              <input name="company" tabIndex={-1} autoComplete="off" />
+            </label>
             <label>
               <span>Ваше имя</span>
               <input name="name" required autoComplete="name" placeholder="Как к вам обращаться?" />
@@ -537,9 +557,15 @@ export default function Home() {
                 <a href="/privacy">политике конфиденциальности</a>
               </span>
             </label>
-            <button className="button button-dark" type="submit">
-              Сформировать заявку <ArrowIcon />
+            <button className="button button-dark" type="submit" disabled={briefStatus === "sending"}>
+              {briefStatus === "sending" ? "Отправляем…" : "Сформировать заявку"} <ArrowIcon />
             </button>
+            <p className={`brief-status brief-status-${briefStatus}`} role="status" aria-live="polite">
+              {briefStatus === "success" && "Спасибо. Заявка отправлена — свяжемся с вами в ближайшее рабочее время."}
+              {briefStatus === "error" && (
+                <>Не удалось отправить заявку. Напишите нам на <a href="mailto:web@curvedlines.ru">web@curvedlines.ru</a>.</>
+              )}
+            </p>
           </form>
         </section>
       </main>
