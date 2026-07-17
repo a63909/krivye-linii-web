@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
 
 export const runtime = "nodejs";
+
+const RESEND_API_URL = "https://api.resend.com/emails";
 
 type LeadPayload = {
   name?: unknown;
@@ -50,30 +51,19 @@ export async function POST(request: Request) {
     );
   }
 
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPassword = process.env.SMTP_PASSWORD;
-  const recipient = process.env.LEAD_RECIPIENT || smtpUser;
+  const apiKey = process.env.RESEND_API_KEY;
+  const recipient = process.env.LEAD_RECIPIENT || "web@curvedlines.ru";
+  const sender =
+    process.env.LEAD_SENDER ||
+    "Кривые Линии WEB — заявки <onboarding@resend.dev>";
 
-  if (!smtpUser || !smtpPassword || !recipient) {
-    console.error("[lead] SMTP environment is not configured");
+  if (!apiKey || !recipient) {
+    console.error("[lead] Email API environment is not configured");
     return NextResponse.json(
       { ok: false, error: "Отправка временно недоступна" },
       { status: 503 },
     );
   }
-
-  const transport = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.mail.ru",
-    port: Number(process.env.SMTP_PORT || 465),
-    secure: true,
-    auth: {
-      user: smtpUser,
-      pass: smtpPassword,
-    },
-    connectionTimeout: 10_000,
-    greetingTimeout: 10_000,
-    socketTimeout: 15_000,
-  });
 
   const safeName = escapeHtml(name);
   const safeContact = escapeHtml(contact);
@@ -82,33 +72,54 @@ export async function POST(request: Request) {
   const safeDetails = escapeHtml(details || "Не указана").replaceAll("\n", "<br />");
 
   try {
-    await transport.sendMail({
-      from: `"Кривые Линии WEB — заявки" <${smtpUser}>`,
-      to: recipient,
-      replyTo: isEmail(contact) ? contact : undefined,
-      subject: `Новая заявка: ${project || "проект"} — ${name}`,
-      text: [
-        `Имя: ${name}`,
-        `Контакт: ${contact}`,
-        `Тип проекта: ${project || "Не указан"}`,
-        `Бюджет: ${budget || "Не указан"}`,
-        "",
-        "Задача:",
-        details || "Не указана",
-      ].join("\n"),
-      html: `
-        <h2>Новая заявка с web.curvedlines.ru</h2>
-        <p><strong>Имя:</strong> ${safeName}</p>
-        <p><strong>Контакт:</strong> ${safeContact}</p>
-        <p><strong>Тип проекта:</strong> ${safeProject}</p>
-        <p><strong>Бюджет:</strong> ${safeBudget}</p>
-        <p><strong>Задача:</strong><br />${safeDetails}</p>
-      `,
+    const response = await fetch(RESEND_API_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: sender,
+        to: [recipient],
+        reply_to: isEmail(contact) ? contact : undefined,
+        subject: `Новая заявка: ${project || "проект"} — ${name}`,
+        text: [
+          `Имя: ${name}`,
+          `Контакт: ${contact}`,
+          `Тип проекта: ${project || "Не указан"}`,
+          `Бюджет: ${budget || "Не указан"}`,
+          "",
+          "Задача:",
+          details || "Не указана",
+        ].join("\n"),
+        html: `
+          <h2>Новая заявка с web.curvedlines.ru</h2>
+          <p><strong>Имя:</strong> ${safeName}</p>
+          <p><strong>Контакт:</strong> ${safeContact}</p>
+          <p><strong>Тип проекта:</strong> ${safeProject}</p>
+          <p><strong>Бюджет:</strong> ${safeBudget}</p>
+          <p><strong>Задача:</strong><br />${safeDetails}</p>
+        `,
+      }),
+      signal: AbortSignal.timeout(15_000),
     });
+
+    if (!response.ok) {
+      const providerError = await response.text();
+      console.error(
+        "[lead] Email API rejected request",
+        response.status,
+        providerError.slice(0, 500),
+      );
+      throw new Error(`Email API returned ${response.status}`);
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("[lead] SMTP delivery failed", error instanceof Error ? error.message : "Unknown error");
+    console.error(
+      "[lead] Email API delivery failed",
+      error instanceof Error ? error.message : "Unknown error",
+    );
     return NextResponse.json(
       { ok: false, error: "Не удалось отправить заявку" },
       { status: 502 },
