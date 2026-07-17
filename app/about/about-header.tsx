@@ -9,7 +9,11 @@ function ArrowIcon() {
   return <span aria-hidden="true">↗</span>;
 }
 
-export default function AboutHeader() {
+type AboutHeaderProps = {
+  active?: "about" | null;
+};
+
+export default function AboutHeader({ active = "about" }: AboutHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -55,7 +59,13 @@ export default function AboutHeader() {
         <Link href="/#services" onClick={closeMenu}>Услуги</Link>
         <Link href="/#prices" onClick={closeMenu}>Цены</Link>
         <Link href="/#process" onClick={closeMenu}>Процесс</Link>
-        <Link href="/about" aria-current="page" onClick={closeMenu}>О нас</Link>
+        <Link
+          href="/about"
+          aria-current={active === "about" ? "page" : undefined}
+          onClick={closeMenu}
+        >
+          О нас
+        </Link>
         <Link className="header-cta" href="/#brief" onClick={closeMenu}>
           Обсудить проект <ArrowIcon />
         </Link>

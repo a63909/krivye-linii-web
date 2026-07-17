@@ -5,45 +5,8 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { FormEvent, useEffect, useState } from "react";
-
-const projects = [
-  {
-    slug: "northline",
-    name: "Northline Residence",
-    category: "Real estate · Brand & Web",
-    description:
-      "Цифровая витрина и визуальная система жилого пространства с архитектурным характером.",
-    image: "/images/portfolio/northline-residence.webp",
-    accent: "#c9b990",
-  },
-  {
-    slug: "vela",
-    name: "Vela Coffee",
-    category: "Hospitality · Identity & E-commerce",
-    description:
-      "Айдентика, упаковка и тёплый digital-опыт для specialty-бренда.",
-    image: "/images/portfolio/vela-coffee.webp",
-    accent: "#de8e78",
-  },
-  {
-    slug: "atlas",
-    name: "Atlas Node",
-    category: "B2B · Corporate & Interface",
-    description:
-      "Сайт и интерфейс международной логистической платформы с ясной системой данных.",
-    image: "/images/portfolio/atlas-node.webp",
-    accent: "#6d8cff",
-  },
-  {
-    slug: "mira",
-    name: "Mira Skin Lab",
-    category: "Beauty · Brand & Commerce",
-    description:
-      "Минималистичная бренд-система и цифровая витрина косметической лаборатории.",
-    image: "/images/portfolio/mira-skin.webp",
-    accent: "#b8aee8",
-  },
-];
+import Link from "next/link";
+import { projects } from "./work/projects";
 
 const services = [
   {
@@ -357,24 +320,30 @@ export default function Home() {
           <div className="portfolio-grid">
             {projects.map((project, index) => (
               <article className={`project-card project-card-${index + 1}`} key={project.slug}>
-                <div className="project-image-wrap">
-                  <img
-                    src={project.image}
-                    alt={`${project.name} — дизайн-проект`}
-                    width={1586}
-                    height={992}
-                    loading="lazy"
-                  />
-                  <span className="project-number">0{index + 1}</span>
-                  <span className="project-open" aria-hidden="true">WEB</span>
-                </div>
-                <div className="project-meta">
-                  <div>
-                    <p>{project.category}</p>
-                    <h3>{project.name}</h3>
+                <Link
+                  className="project-card-link"
+                  href={`/work/${project.slug}`}
+                  aria-label={`Открыть кейс ${project.name}`}
+                >
+                  <div className="project-image-wrap">
+                    <img
+                      src={project.image}
+                      alt={`${project.name} — дизайн-проект`}
+                      width={1586}
+                      height={992}
+                      loading="lazy"
+                    />
+                    <span className="project-number">0{index + 1}</span>
+                    <span className="project-open" aria-hidden="true">КЕЙС ↗</span>
                   </div>
-                  <p>{project.description}</p>
-                </div>
+                  <div className="project-meta">
+                    <div>
+                      <p>{project.category}</p>
+                      <h3>{project.name}</h3>
+                    </div>
+                    <p>{project.description}</p>
+                  </div>
+                </Link>
               </article>
             ))}
           </div>
