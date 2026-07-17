@@ -93,7 +93,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         <section className="case-story case-section">
           <p className="case-section-label">01 / ЗАДАЧА</p>
           <div>
-            <h2>Визуальный характер начинается с точной задачи.</h2>
+            <h2>{project.challengeHeading}</h2>
             <p>{project.challenge}</p>
             <p>{project.approach}</p>
           </div>
@@ -135,7 +135,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
         <section className="case-scope">
           <div>
             <p className="case-section-label">03 / СОСТАВ РАБОТ</p>
-            <h2>Не отдельный экран, а связная система.</h2>
+            <h2>{project.scopeHeading}</h2>
           </div>
           <ul>
             {project.deliverables.map((item, index) => (
