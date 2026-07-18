@@ -187,6 +187,7 @@ export default function Home() {
 
       form.reset();
       briefStartedAt.current = Date.now();
+      window.ym?.(110842965, "reachGoal", "lead_form_submit");
       setBriefStatus("success");
     } catch {
       setBriefStatus("error");
