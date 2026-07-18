@@ -97,7 +97,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const metrikaId = Number(process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID);
+  const metrikaId = 110842965;
 
   return (
     <html lang="ru">
@@ -105,9 +105,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${manrope.variable} ${roboto.variable} antialiased`}
       >
         {children}
-        {Number.isInteger(metrikaId) && metrikaId > 0 ? (
-          <YandexMetrika counterId={metrikaId} />
-        ) : null}
+        <YandexMetrika counterId={metrikaId} />
       </body>
     </html>
   );
