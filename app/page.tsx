@@ -4,7 +4,7 @@
    provide the Next.js image-optimizer endpoint. */
 /* eslint-disable @next/next/no-img-element */
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { projects } from "./work/projects";
 
@@ -139,6 +139,11 @@ function ArrowIcon() {
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [briefStatus, setBriefStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const briefStartedAt = useRef(0);
+
+  useEffect(() => {
+    briefStartedAt.current = Date.now();
+  }, []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -174,13 +179,14 @@ export default function Home() {
           project: String(data.get("project") ?? ""),
           budget: String(data.get("budget") ?? ""),
           details: String(data.get("details") ?? ""),
-          company: String(data.get("company") ?? ""),
+          startedAt: briefStartedAt.current,
         }),
       });
 
       if (!response.ok) throw new Error("Lead delivery failed");
 
       form.reset();
+      briefStartedAt.current = Date.now();
       setBriefStatus("success");
     } catch {
       setBriefStatus("error");
@@ -475,10 +481,6 @@ export default function Home() {
           </div>
 
           <form className="brief-form" onSubmit={submitBrief}>
-            <label className="brief-honeypot" aria-hidden="true">
-              <span>Компания</span>
-              <input name="company" tabIndex={-1} autoComplete="off" />
-            </label>
             <label>
               <span>Ваше имя</span>
               <input name="name" required autoComplete="name" placeholder="Как к вам обращаться?" />
