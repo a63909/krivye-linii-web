@@ -10,7 +10,7 @@ type LeadPayload = {
   project?: unknown;
   budget?: unknown;
   details?: unknown;
-  company?: unknown;
+  startedAt?: unknown;
 };
 
 const normalize = (value: unknown, maxLength: number) =>
@@ -35,8 +35,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: "Некорректные данные" }, { status: 400 });
   }
 
-  const company = normalize(payload.company, 120);
-  if (company) return NextResponse.json({ ok: true });
+  const startedAt =
+    typeof payload.startedAt === "number"
+      ? payload.startedAt
+      : Number(payload.startedAt);
+  const fillTime = Date.now() - startedAt;
+
+  if (!Number.isFinite(startedAt) || fillTime < 750 || fillTime > 86_400_000) {
+    return NextResponse.json(
+      { ok: false, error: "Обновите страницу и повторите отправку" },
+      { status: 400 },
+    );
+  }
 
   const name = normalize(payload.name, 120);
   const contact = normalize(payload.contact, 180);
@@ -113,6 +123,13 @@ export async function POST(request: Request) {
       );
       throw new Error(`Email API returned ${response.status}`);
     }
+
+    const providerResult = (await response.json().catch(() => null)) as
+      | { id?: string }
+      | null;
+    console.info("[lead] Resend accepted message", {
+      id: providerResult?.id || "unknown",
+    });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
