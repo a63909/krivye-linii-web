@@ -5,45 +5,8 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { FormEvent, useEffect, useState } from "react";
-
-const projects = [
-  {
-    slug: "northline",
-    name: "Northline Residence",
-    category: "Real estate · Brand & Web",
-    description:
-      "Цифровая витрина и визуальная система жилого пространства с архитектурным характером.",
-    image: "/images/portfolio/northline-residence.webp",
-    accent: "#c9b990",
-  },
-  {
-    slug: "vela",
-    name: "Vela Coffee",
-    category: "Hospitality · Identity & E-commerce",
-    description:
-      "Айдентика, упаковка и тёплый digital-опыт для specialty-бренда.",
-    image: "/images/portfolio/vela-coffee.webp",
-    accent: "#de8e78",
-  },
-  {
-    slug: "atlas",
-    name: "Atlas Node",
-    category: "B2B · Corporate & Interface",
-    description:
-      "Сайт и интерфейс международной логистической платформы с ясной системой данных.",
-    image: "/images/portfolio/atlas-node.webp",
-    accent: "#6d8cff",
-  },
-  {
-    slug: "mira",
-    name: "Mira Skin Lab",
-    category: "Beauty · Brand & Commerce",
-    description:
-      "Минималистичная бренд-система и цифровая витрина косметической лаборатории.",
-    image: "/images/portfolio/mira-skin.webp",
-    accent: "#b8aee8",
-  },
-];
+import Link from "next/link";
+import { projects } from "./work/projects";
 
 const services = [
   {
@@ -175,6 +138,7 @@ function ArrowIcon() {
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [briefStatus, setBriefStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -193,19 +157,34 @@ export default function Home() {
     };
   }, [menuOpen]);
 
-  const submitBrief = (event: FormEvent<HTMLFormElement>) => {
+  const submitBrief = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const name = String(data.get("name") ?? "");
-    const contact = String(data.get("contact") ?? "");
-    const project = String(data.get("project") ?? "");
-    const budget = String(data.get("budget") ?? "");
-    const details = String(data.get("details") ?? "");
-    const subject = encodeURIComponent(`Новый проект — ${project || "Кривые Линии WEB"}`);
-    const body = encodeURIComponent(
-      `Имя: ${name}\nКонтакт: ${contact}\nТип проекта: ${project}\nБюджет: ${budget}\n\nЗадача:\n${details}`,
-    );
-    window.location.href = `mailto:web@curvedlines.ru?subject=${subject}&body=${body}`;
+    const form = event.currentTarget;
+    const data = new FormData(form);
+
+    setBriefStatus("sending");
+
+    try {
+      const response = await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: String(data.get("name") ?? ""),
+          contact: String(data.get("contact") ?? ""),
+          project: String(data.get("project") ?? ""),
+          budget: String(data.get("budget") ?? ""),
+          details: String(data.get("details") ?? ""),
+          company: String(data.get("company") ?? ""),
+        }),
+      });
+
+      if (!response.ok) throw new Error("Lead delivery failed");
+
+      form.reset();
+      setBriefStatus("success");
+    } catch {
+      setBriefStatus("error");
+    }
   };
 
   const closeMenu = () => setMenuOpen(false);
@@ -341,24 +320,30 @@ export default function Home() {
           <div className="portfolio-grid">
             {projects.map((project, index) => (
               <article className={`project-card project-card-${index + 1}`} key={project.slug}>
-                <div className="project-image-wrap">
-                  <img
-                    src={project.image}
-                    alt={`${project.name} — дизайн-проект`}
-                    width={1586}
-                    height={992}
-                    loading="lazy"
-                  />
-                  <span className="project-number">0{index + 1}</span>
-                  <span className="project-open" aria-hidden="true">WEB</span>
-                </div>
-                <div className="project-meta">
-                  <div>
-                    <p>{project.category}</p>
-                    <h3>{project.name}</h3>
+                <Link
+                  className="project-card-link"
+                  href={`/work/${project.slug}`}
+                  aria-label={`Открыть кейс ${project.name}`}
+                >
+                  <div className="project-image-wrap">
+                    <img
+                      src={project.image}
+                      alt={`${project.name} — дизайн-проект`}
+                      width={1586}
+                      height={992}
+                      loading="lazy"
+                    />
+                    <span className="project-number">0{index + 1}</span>
+                    <span className="project-open" aria-hidden="true">КЕЙС ↗</span>
                   </div>
-                  <p>{project.description}</p>
-                </div>
+                  <div className="project-meta">
+                    <div>
+                      <p>{project.category}</p>
+                      <h3>{project.name}</h3>
+                    </div>
+                    <p>{project.description}</p>
+                  </div>
+                </Link>
               </article>
             ))}
           </div>
@@ -490,6 +475,10 @@ export default function Home() {
           </div>
 
           <form className="brief-form" onSubmit={submitBrief}>
+            <label className="brief-honeypot" aria-hidden="true">
+              <span>Компания</span>
+              <input name="company" tabIndex={-1} autoComplete="off" />
+            </label>
             <label>
               <span>Ваше имя</span>
               <input name="name" required autoComplete="name" placeholder="Как к вам обращаться?" />
@@ -537,9 +526,15 @@ export default function Home() {
                 <a href="/privacy">политике конфиденциальности</a>
               </span>
             </label>
-            <button className="button button-dark" type="submit">
-              Сформировать заявку <ArrowIcon />
+            <button className="button button-dark" type="submit" disabled={briefStatus === "sending"}>
+              {briefStatus === "sending" ? "Отправляем…" : "Сформировать заявку"} <ArrowIcon />
             </button>
+            <p className={`brief-status brief-status-${briefStatus}`} role="status" aria-live="polite">
+              {briefStatus === "success" && "Спасибо. Заявка отправлена — свяжемся с вами в ближайшее рабочее время."}
+              {briefStatus === "error" && (
+                <>Не удалось отправить заявку. Напишите нам на <a href="mailto:web@curvedlines.ru">web@curvedlines.ru</a>.</>
+              )}
+            </p>
           </form>
         </section>
       </main>

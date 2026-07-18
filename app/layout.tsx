@@ -7,6 +7,7 @@ import {
   Roboto,
 } from "next/font/google";
 import "./globals.css";
+import YandexMetrika from "./yandex-metrika";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -96,12 +97,17 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const metrikaId = Number(process.env.NEXT_PUBLIC_YANDEX_METRIKA_ID);
+
   return (
     <html lang="ru">
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${manrope.variable} ${roboto.variable} antialiased`}
       >
         {children}
+        {Number.isInteger(metrikaId) && metrikaId > 0 ? (
+          <YandexMetrika counterId={metrikaId} />
+        ) : null}
       </body>
     </html>
   );
