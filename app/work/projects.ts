@@ -5,6 +5,7 @@ export type ProjectCase = {
   shortCategory: string;
   description: string;
   image: string;
+  gallery: [string, string, string];
   accent: string;
   challenge: string;
   challengeHeading: string;
@@ -24,7 +25,12 @@ export const projects: ProjectCase[] = [
     shortCategory: "Недвижимость",
     description:
       "Цифровая витрина и визуальная система жилого пространства с архитектурным характером.",
-    image: "/images/portfolio/northline-residence.webp",
+    image: "/images/portfolio/northline-home.webp",
+    gallery: [
+      "/images/portfolio/northline/01-cover.webp",
+      "/images/portfolio/northline/02-catalog.webp",
+      "/images/portfolio/northline/03-residence-detail.webp",
+    ],
     accent: "#c9b990",
     challenge:
       "Собрать премиальную подачу жилого проекта без привычного рекламного шума и сохранить в центре внимания саму архитектуру.",
@@ -47,7 +53,12 @@ export const projects: ProjectCase[] = [
     shortCategory: "HoReCa и retail",
     description:
       "Айдентика, упаковка и тёплый digital-опыт для specialty-бренда.",
-    image: "/images/portfolio/vela-coffee.webp",
+    image: "/images/portfolio/vela-home.webp",
+    gallery: [
+      "/images/portfolio/vela/01-cover.webp",
+      "/images/portfolio/vela/02-shop.webp",
+      "/images/portfolio/vela/03-product.webp",
+    ],
     accent: "#de8e78",
     challenge:
       "Передать характер specialty-бренда и одновременно сделать выбор продукта понятным для человека, который не обязан разбираться в кофейной терминологии.",
@@ -70,7 +81,12 @@ export const projects: ProjectCase[] = [
     shortCategory: "B2B и технологии",
     description:
       "Сайт и интерфейс международной логистической платформы с ясной системой данных.",
-    image: "/images/portfolio/atlas-node.webp",
+    image: "/images/portfolio/atlas-home.webp",
+    gallery: [
+      "/images/portfolio/atlas/01-cover.webp",
+      "/images/portfolio/atlas/02-dashboard.webp",
+      "/images/portfolio/atlas/03-shipment.webp",
+    ],
     accent: "#6d8cff",
     challenge:
       "Объяснить сложный B2B-продукт людям с разными ролями: от руководителя до специалиста, который ежедневно работает с данными и маршрутами.",
@@ -93,7 +109,12 @@ export const projects: ProjectCase[] = [
     shortCategory: "Beauty и commerce",
     description:
       "Минималистичная бренд-система и цифровая витрина косметической лаборатории.",
-    image: "/images/portfolio/mira-skin.webp",
+    image: "/images/portfolio/mira-home.webp",
+    gallery: [
+      "/images/portfolio/mira/01-cover.webp",
+      "/images/portfolio/mira/02-collection.webp",
+      "/images/portfolio/mira/03-product.webp",
+    ],
     accent: "#b8aee8",
     challenge:
       "Соединить лабораторную точность и эмоциональность beauty-категории, не превращая интерфейс ни в медицинский справочник, ни в декоративную витрину.",

@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
       url: `/work/${project.slug}`,
       title: `${project.name} — Кривые Линии WEB`,
       description: project.description,
-      images: [{ url: project.image, alt: `${project.name} — дизайн-проект` }],
+      images: [{ url: project.gallery[0], alt: `${project.name} — дизайн-проект` }],
     },
   };
 }
@@ -50,7 +50,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
     "@type": "CreativeWork",
     name: project.name,
     description: project.description,
-    image: `https://web.curvedlines.ru${project.image}`,
+    image: `https://web.curvedlines.ru${project.gallery[0]}`,
     creator: {
       "@type": "Organization",
       name: "Кривые Линии WEB",
@@ -80,7 +80,7 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
 
           <div className="case-hero-media">
             <img
-              src={project.image}
+              src={project.gallery[0]}
               alt={`${project.name} — ключевой экран проекта`}
               width={1586}
               height={992}
@@ -99,17 +99,17 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
           </div>
         </section>
 
-        <section className="case-showcase" aria-label={`Детали проекта ${project.name}`}>
-          <div className="case-showcase-main">
-            <img src={project.image} alt="Композиция ключевого экрана" width={1586} height={992} />
-          </div>
-          <div className="case-showcase-detail case-showcase-detail-left">
-            <img src={project.image} alt="Деталь визуальной системы" width={1586} height={992} />
-          </div>
-          <div className="case-showcase-detail case-showcase-detail-right">
-            <img src={project.image} alt="Деталь интерфейса" width={1586} height={992} />
-          </div>
-        </section>
+      <section className="case-showcase" aria-label={`Детали проекта ${project.name}`}>
+        <div className="case-showcase-main">
+          <img src={project.gallery[0]} alt="Композиция ключевого экрана" width={1536} height={1024} />
+        </div>
+        <div className="case-showcase-detail case-showcase-detail-left">
+          <img src={project.gallery[1]} alt="Деталь визуальной системы" width={1536} height={1024} />
+        </div>
+        <div className="case-showcase-detail case-showcase-detail-right">
+          <img src={project.gallery[2]} alt="Деталь интерфейса" width={1536} height={1024} />
+        </div>
+      </section>
 
         <section className="case-decisions case-section">
           <p className="case-section-label">02 / РЕШЕНИЕ</p>
