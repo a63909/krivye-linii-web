@@ -238,3 +238,17 @@ export default function DocumentsPage() {
             </div>
             <p>Москва · работаем по России</p>
             <p className="footer-status"><i /> Принимаем новые проекты</p>
+            <p>Фиксируем сроки, стоимость и этапы до начала работ.</p>
+          </section>
+        </div>
+        <div className="footer-bottom">
+          <p>© 2026 «Кривые Линии WEB». Все права защищены.</p>
+          <div>
+            <Link href="/privacy">Политика конфиденциальности</Link>
+            <Link href="/consent">Согласие на обработку данных</Link>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
