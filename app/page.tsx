@@ -572,6 +572,7 @@ export default function Home() {
             <a href="#prices">Цены</a>
             <a href="#brief">Контакты</a>
             <a href="/about">О нас</a>
+            <a href="/documents">Документы</a>
           </nav>
           <section className="footer-column footer-contact-column">
             <span className="footer-column-label">Контакты</span>
@@ -579,7 +580,7 @@ export default function Home() {
             <div className="footer-legal-details">
               <strong>ИП Гладышев Андрей Иванович</strong>
               <span>ИНН 860219643299</span>
-              <span>ОГРНИП 319861700068507</span>
+              <span>ОГРНИП 3198611700068507</span>
               <span>Юридический адрес: Москва, Пресненская набережная, д. 12</span>
             </div>
             <p>Москва · работаем по России</p>
