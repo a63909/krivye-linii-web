@@ -25,7 +25,7 @@ export const projects: ProjectCase[] = [
     shortCategory: "Недвижимость",
     description:
       "Цифровая витрина и визуальная система жилого пространства с архитектурным характером.",
-    image: "/images/portfolio/northline-home.webp",
+    image: "/images/portfolio/northline/01-cover.webp",
     gallery: [
       "/images/portfolio/northline/01-cover.webp",
       "/images/portfolio/northline/02-catalog.webp",
@@ -53,7 +53,7 @@ export const projects: ProjectCase[] = [
     shortCategory: "HoReCa и retail",
     description:
       "Айдентика, упаковка и тёплый digital-опыт для specialty-бренда.",
-    image: "/images/portfolio/vela-home.webp",
+    image: "/images/portfolio/vela/01-cover.webp",
     gallery: [
       "/images/portfolio/vela/01-cover.webp",
       "/images/portfolio/vela/02-shop.webp",
@@ -81,7 +81,7 @@ export const projects: ProjectCase[] = [
     shortCategory: "B2B и технологии",
     description:
       "Сайт и интерфейс международной логистической платформы с ясной системой данных.",
-    image: "/images/portfolio/atlas-home.webp",
+    image: "/images/portfolio/atlas/01-cover.webp",
     gallery: [
       "/images/portfolio/atlas/01-cover.webp",
       "/images/portfolio/atlas/02-dashboard.webp",
@@ -109,7 +109,7 @@ export const projects: ProjectCase[] = [
     shortCategory: "Beauty и commerce",
     description:
       "Минималистичная бренд-система и цифровая витрина косметической лаборатории.",
-    image: "/images/portfolio/mira-home.webp",
+    image: "/images/portfolio/mira/01-cover.webp",
     gallery: [
       "/images/portfolio/mira/01-cover.webp",
       "/images/portfolio/mira/02-collection.webp",

@@ -300,8 +300,8 @@ export default function Home() {
                   <img
                     src={project.image}
                     alt=""
-                    width={1586}
-                    height={992}
+                    width={1536}
+                    height={1024}
                     loading={index === 0 ? "eager" : "lazy"}
                   />
                   <div className="rail-card-shade" />
@@ -336,8 +336,8 @@ export default function Home() {
                     <img
                       src={project.image}
                       alt={`${project.name} — дизайн-проект`}
-                      width={1586}
-                      height={992}
+                      width={1536}
+                      height={1024}
                       loading="lazy"
                     />
                     <span className="project-number">0{index + 1}</span>

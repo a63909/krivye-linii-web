@@ -82,8 +82,8 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
             <img
               src={project.gallery[0]}
               alt={`${project.name} — ключевой экран проекта`}
-              width={1586}
-              height={992}
+              width={1536}
+              height={1024}
               fetchPriority="high"
             />
             <span>КРИВЫЕ ЛИНИИ / WEB</span>
