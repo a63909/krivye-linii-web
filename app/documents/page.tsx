@@ -51,9 +51,9 @@ export default function DocumentsPage() {
                 Здесь собраны сведения о правообладателе бренда, реквизиты
                 исполнителя и документы, регулирующие работу сайта.
               </p>
-              <a className="documents-email" href="mailto:web@curvedlines.ru">
+              <Link className="documents-email" href="/brief">
                 web@curvedlines.ru <span aria-hidden="true">↗</span>
-              </a>
+              </Link>
             </div>
           </div>
           <div className="documents-hero-facts" aria-label="Ключевые сведения">
@@ -189,9 +189,9 @@ export default function DocumentsPage() {
         <section className="documents-cta">
           <p>НУЖНЫ ДОКУМЕНТЫ ДЛЯ ДОГОВОРА?</p>
           <h2>Запросите комплект — отправим актуальные реквизиты и обсудим проект.</h2>
-          <a className="button button-dark" href="mailto:web@curvedlines.ru?subject=Запрос документов — Кривые Линии WEB">
+          <Link className="button button-dark" href="/brief">
             Написать студии <span aria-hidden="true">↗</span>
-          </a>
+          </Link>
         </section>
       </main>
 
