@@ -36,6 +36,49 @@ const workPrinciples = [
   },
 ];
 
+const documentTemplates = [
+  {
+    number: "01",
+    title: "Договор на разработку сайта",
+    description:
+      "Фиксирует предмет работ, этапы, стоимость, порядок оплаты, права сторон и условия приёмки.",
+    pages: "3 страницы",
+    preview: "/documents/templates/contract-preview.webp",
+    pdf: "/documents/templates/01_dogovor_na_razrabotku_sayta.pdf",
+    docx: "/documents/templates/01_dogovor_na_razrabotku_sayta.docx",
+  },
+  {
+    number: "02",
+    title: "Техническое задание",
+    description:
+      "Переводит договорённости в точный состав страниц, функций, материалов, интеграций и критериев готовности.",
+    pages: "4 страницы",
+    preview: "/documents/templates/technical-brief-preview.webp",
+    pdf: "/documents/templates/02_tehnicheskoe_zadanie.pdf",
+    docx: "/documents/templates/02_tehnicheskoe_zadanie.docx",
+  },
+  {
+    number: "03",
+    title: "Смета и коммерческое предложение",
+    description:
+      "Показывает состав и стоимость этапов, сроки, варианты комплектации и итоговый бюджет проекта.",
+    pages: "3 страницы",
+    preview: "/documents/templates/estimate-preview.webp",
+    pdf: "/documents/templates/03_smeta_kommercheskoe_predlozhenie.pdf",
+    docx: "/documents/templates/03_smeta_kommercheskoe_predlozhenie.docx",
+  },
+  {
+    number: "04",
+    title: "Акт сдачи-приёмки",
+    description:
+      "Подтверждает передачу результата, завершение этапа и отсутствие замечаний по выполненным работам.",
+    pages: "3 страницы",
+    preview: "/documents/templates/acceptance-act-preview.webp",
+    pdf: "/documents/templates/04_akt_sdachi_priemki.pdf",
+    docx: "/documents/templates/04_akt_sdachi_priemki.docx",
+  },
+];
+
 export default function DocumentsPage() {
   return (
     <div className="site-shell documents-shell">
@@ -167,9 +210,77 @@ export default function DocumentsPage() {
           </div>
         </section>
 
+        <section className="documents-templates documents-section">
+          <div className="documents-section-heading">
+            <p>04 / ШАБЛОНЫ ДОКУМЕНТОВ</p>
+            <h2>Документы, с которых начинается спокойная работа.</h2>
+          </div>
+          <div className="documents-templates-intro">
+            <p>
+              Шаблоны показывают, как мы фиксируем условия проекта. Перед
+              стартом адаптируем их под задачу, состав работ и реквизиты
+              клиента.
+            </p>
+          </div>
+
+          <div className="documents-template-grid">
+            {documentTemplates.map((document) => (
+              <article
+                className="documents-template-card"
+                key={document.number}
+              >
+                <a
+                  className="documents-template-preview"
+                  href={document.pdf}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={`Открыть PDF: ${document.title}`}
+                >
+                  <img
+                    src={document.preview}
+                    alt={`Первая страница документа: ${document.title}`}
+                    width={900}
+                    height={1273}
+                    loading="lazy"
+                  />
+                </a>
+                <div className="documents-template-body">
+                  <div className="documents-template-meta">
+                    <span>{document.number}</span>
+                    <span>{document.pages}</span>
+                  </div>
+                  <h3>{document.title}</h3>
+                  <p>{document.description}</p>
+                  <div className="documents-template-actions">
+                    <a href={document.pdf} target="_blank" rel="noreferrer">
+                      Открыть PDF <span aria-hidden="true">↗</span>
+                    </a>
+                    <a href={document.docx} download>
+                      Скачать DOCX <span aria-hidden="true">↓</span>
+                    </a>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="documents-template-bundle">
+            <div>
+              <span>Полный комплект / 8 файлов</span>
+              <strong>PDF для просмотра и DOCX для редактирования.</strong>
+            </div>
+            <a
+              href="/documents/templates/paket_shablonov_krivye_linii_web_complete.zip"
+              download
+            >
+              Скачать весь комплект <span aria-hidden="true">↓</span>
+            </a>
+          </div>
+        </section>
+
         <section className="documents-legal">
           <div className="documents-section-heading documents-section-heading-light">
-            <p>04 / ЮРИДИЧЕСКИЕ ДОКУМЕНТЫ</p>
+            <p>05 / ЮРИДИЧЕСКИЕ ДОКУМЕНТЫ</p>
             <h2>Правила обработки данных.</h2>
           </div>
           <div className="documents-legal-links">
