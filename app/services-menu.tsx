@@ -8,12 +8,12 @@ type ServicesMenuProps = {
 };
 
 const serviceLinks = [
-  "Сайты и интернет-магазины",
-  "Android-приложения",
-  "Веб-сервисы",
-  "UX/UI и редизайн",
-  "Интеграции и автоматизация",
-  "Брендинг и поддержка",
+  { label: "Сайты и интернет-магазины", href: "/services/sites" },
+  { label: "Android-приложения", href: "/#services" },
+  { label: "Веб-сервисы", href: "/#services" },
+  { label: "UX/UI и редизайн", href: "/#services" },
+  { label: "Интеграции и автоматизация", href: "/#services" },
+  { label: "Брендинг и поддержка", href: "/#services" },
 ];
 
 export default function ServicesMenu({
@@ -36,9 +36,9 @@ export default function ServicesMenu({
       </button>
 
       <div className="clients-submenu" id={id}>
-        {serviceLinks.map((label) => (
-          <a href="#services" key={label} onClick={onNavigate}>
-            {label}
+        {serviceLinks.map((item) => (
+          <a href={item.href} key={item.label} onClick={onNavigate}>
+            {item.label}
           </a>
         ))}
       </div>
