@@ -7,6 +7,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ClientsMenu from "./clients-menu";
+import ServicesMenu from "./services-menu";
 import { projects } from "./work/projects";
 
 const services = [
@@ -139,6 +140,7 @@ function ArrowIcon() {
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
   const [clientsOpen, setClientsOpen] = useState(false);
   const [briefStatus, setBriefStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const briefStartedAt = useRef(0);
@@ -148,11 +150,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!menuOpen && !clientsOpen) return;
+    if (!menuOpen && !servicesOpen && !clientsOpen) return;
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setMenuOpen(false);
+        setServicesOpen(false);
         setClientsOpen(false);
       }
     };
@@ -165,7 +168,7 @@ export default function Home() {
       if (menuOpen) document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [menuOpen, clientsOpen]);
+  }, [menuOpen, servicesOpen, clientsOpen]);
 
   const submitBrief = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -201,6 +204,7 @@ export default function Home() {
 
   const closeMenu = () => {
     setMenuOpen(false);
+    setServicesOpen(false);
     setClientsOpen(false);
   };
 
@@ -226,13 +230,24 @@ export default function Home() {
           aria-label="Главное меню"
         >
           <a href="#portfolio" onClick={closeMenu}>Работы</a>
-          <a href="#services" onClick={closeMenu}>Услуги</a>
+          <ServicesMenu
+            id="home-services-navigation"
+            open={servicesOpen}
+            onToggle={() => {
+              setServicesOpen((value) => !value);
+              setClientsOpen(false);
+            }}
+            onNavigate={closeMenu}
+          />
           <a href="#prices" onClick={closeMenu}>Цены</a>
           <a href="#process" onClick={closeMenu}>Процесс</a>
           <ClientsMenu
             id="home-clients-navigation"
             open={clientsOpen}
-            onToggle={() => setClientsOpen((value) => !value)}
+            onToggle={() => {
+              setClientsOpen((value) => !value);
+              setServicesOpen(false);
+            }}
             onNavigate={closeMenu}
           />
           <a href="/about" onClick={closeMenu}>О нас</a>
@@ -246,6 +261,7 @@ export default function Home() {
           type="button"
           onClick={() => {
             setMenuOpen((value) => !value);
+            setServicesOpen(false);
             setClientsOpen(false);
           }}
           aria-expanded={menuOpen}
@@ -281,12 +297,13 @@ export default function Home() {
             <p className="eyebrow"><span /> WEB-ДИЗАЙН / РАЗРАБОТКА / АЙДЕНТИКА</p>
             <h1>
               Создаём сайты,
-              <br />которые работают
-              <br />на бизнес.
+              <br />Android-приложения
+              <br />и цифровые сервисы
+              <br />для бизнеса.
             </h1>
             <p className="hero-lead">
-              Стратегия, UX/UI-дизайн и разработка — в одной команде. Лендинги
-              и корпоративные сайты под ключ, без шаблонных решений.
+              От лендинга до сложного цифрового продукта: проектирование, дизайн,
+              разработка, интеграции и запуск в одной команде.
             </p>
             <div className="hero-actions">
               <a className="button button-light" href="#brief">Рассчитать проект <ArrowIcon /></a>
