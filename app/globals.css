@@ -182,6 +182,121 @@ button {
   transform-origin: left;
 }
 
+.clients-menu {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.clients-menu-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  background: transparent;
+  color: rgba(250, 248, 242, 0.74);
+  font: inherit;
+  transition: color 180ms ease;
+}
+
+.clients-menu-trigger::after {
+  position: absolute;
+  right: 0;
+  bottom: -7px;
+  left: 0;
+  height: 1px;
+  background: var(--yellow);
+  content: "";
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 180ms ease;
+}
+
+.clients-menu-trigger:hover,
+.clients-menu-trigger[aria-current="page"],
+.clients-menu.is-open .clients-menu-trigger {
+  color: var(--paper-bright);
+}
+
+.clients-menu-trigger:hover::after,
+.clients-menu-trigger[aria-current="page"]::after,
+.clients-menu.is-open .clients-menu-trigger::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.clients-menu-chevron {
+  width: 6px;
+  height: 6px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 180ms ease;
+}
+
+.clients-menu.is-open .clients-menu-chevron {
+  transform: translateY(2px) rotate(225deg);
+}
+
+.clients-submenu {
+  position: absolute;
+  top: calc(100% + 18px);
+  left: 50%;
+  z-index: 20;
+  visibility: hidden;
+  width: max-content;
+  min-width: 292px;
+  border: 1px solid rgba(250, 248, 242, 0.18);
+  background: rgba(9, 11, 10, 0.985);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+  padding: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -8px);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    visibility 180ms ease;
+}
+
+.clients-submenu::before {
+  position: absolute;
+  top: -18px;
+  left: 0;
+  width: 100%;
+  height: 18px;
+  content: "";
+}
+
+.clients-submenu a {
+  display: block;
+  padding: 12px 14px;
+  color: rgba(250, 248, 242, 0.74);
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: nowrap;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.clients-submenu a:hover {
+  background: rgba(250, 248, 242, 0.07);
+  color: var(--paper-bright);
+}
+
+@media (min-width: 901px) {
+  .clients-menu:hover .clients-submenu,
+  .clients-menu:focus-within .clients-submenu,
+  .clients-menu.is-open .clients-submenu {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, 0);
+  }
+}
+
 .header-cta,
 .button {
   display: inline-flex;
@@ -1694,6 +1809,59 @@ button {
     display: none;
   }
 
+  .clients-menu {
+    display: block;
+    border-bottom: 1px solid var(--line-dark);
+  }
+
+  .clients-menu-trigger {
+    width: 100%;
+    justify-content: space-between;
+    padding: 17px 0;
+    color: var(--paper-bright);
+    font-size: 16px;
+  }
+
+  .clients-menu-trigger::after {
+    display: none;
+  }
+
+  .clients-submenu {
+    position: static;
+    visibility: visible;
+    width: 100%;
+    min-width: 0;
+    max-height: 0;
+    overflow: hidden;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    opacity: 1;
+    pointer-events: none;
+    transform: none;
+    transition:
+      max-height 220ms ease,
+      padding 220ms ease;
+  }
+
+  .clients-submenu::before {
+    display: none;
+  }
+
+  .clients-menu.is-open .clients-submenu {
+    max-height: 190px;
+    padding-bottom: 12px;
+    pointer-events: auto;
+  }
+
+  .clients-submenu a {
+    padding: 10px 0 10px 16px;
+    color: rgba(250, 248, 242, 0.66);
+    font-size: 14px;
+    white-space: normal;
+  }
+
   .header-cta {
     margin-top: 20px;
   }
@@ -2192,6 +2360,17 @@ button {
 
 .header-nav a[aria-current="page"]::after {
   transform: scaleX(1);
+}
+
+.clients-shell {
+  min-height: 100svh;
+  background: var(--ink);
+}
+
+.clients-empty-page {
+  min-height: 100svh;
+  background: var(--ink);
+  padding-top: var(--header-height);
 }
 
 .about-page {
