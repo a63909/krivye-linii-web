@@ -6,6 +6,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import ClientsMenu from "./clients-menu";
 import { projects } from "./work/projects";
 
 const services = [
@@ -138,6 +139,7 @@ function ArrowIcon() {
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [clientsOpen, setClientsOpen] = useState(false);
   const [briefStatus, setBriefStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const briefStartedAt = useRef(0);
 
@@ -146,21 +148,24 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen && !clientsOpen) return;
 
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        setClientsOpen(false);
+      }
     };
 
     const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (menuOpen) document.body.style.overflow = "hidden";
     window.addEventListener("keydown", closeOnEscape);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      if (menuOpen) document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [menuOpen]);
+  }, [menuOpen, clientsOpen]);
 
   const submitBrief = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -194,7 +199,10 @@ export default function Home() {
     }
   };
 
-  const closeMenu = () => setMenuOpen(false);
+  const closeMenu = () => {
+    setMenuOpen(false);
+    setClientsOpen(false);
+  };
 
   return (
     <div className="site-shell">
@@ -221,6 +229,12 @@ export default function Home() {
           <a href="#services" onClick={closeMenu}>Услуги</a>
           <a href="#prices" onClick={closeMenu}>Цены</a>
           <a href="#process" onClick={closeMenu}>Процесс</a>
+          <ClientsMenu
+            id="home-clients-navigation"
+            open={clientsOpen}
+            onToggle={() => setClientsOpen((value) => !value)}
+            onNavigate={closeMenu}
+          />
           <a href="/about" onClick={closeMenu}>О нас</a>
           <a className="header-cta" href="#brief" onClick={closeMenu}>
             Обсудить проект <ArrowIcon />
@@ -230,7 +244,10 @@ export default function Home() {
         <button
           className={menuOpen ? "menu-button is-open" : "menu-button"}
           type="button"
-          onClick={() => setMenuOpen((value) => !value)}
+          onClick={() => {
+            setMenuOpen((value) => !value);
+            setClientsOpen(false);
+          }}
           aria-expanded={menuOpen}
           aria-controls="main-navigation"
           aria-label={menuOpen ? "Закрыть меню" : "Открыть меню"}
