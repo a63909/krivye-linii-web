@@ -1850,7 +1850,7 @@ button {
   }
 
   .clients-menu.is-open .clients-submenu {
-    max-height: 190px;
+    max-height: 240px;
     padding-bottom: 12px;
     pointer-events: auto;
   }
@@ -2962,6 +2962,10 @@ button {
   border-top: 1px solid var(--line-light);
 }
 
+.documents-page section[id] {
+  scroll-margin-top: 132px;
+}
+
 .documents-templates-intro {
   display: grid;
   grid-template-columns: minmax(160px, 0.46fr) minmax(0, 1.54fr);
@@ -3538,6 +3542,10 @@ button {
 
   .documents-templates-intro p {
     grid-column: 1;
+  }
+
+  .documents-page section[id] {
+    scroll-margin-top: 96px;
   }
 
   .documents-template-card {
