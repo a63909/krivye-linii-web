@@ -168,14 +168,6 @@ export default function DocumentsPage() {
             </figure>
           </div>
 
-          <div className="documents-certificate-privacy">
-            <span>Публичная версия</span>
-            <p>
-              Регистрационный номер и сроки действия остаются видимыми.
-              Персональные адреса и подпись можно скрыть без потери
-              проверяемости документа.
-            </p>
-          </div>
         </section>
 
         <section className="documents-requisites" id="details">
