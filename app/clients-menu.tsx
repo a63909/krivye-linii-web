@@ -12,16 +12,20 @@ type ClientsMenuProps = {
 
 const clientLinks = [
   {
-    href: "/clients/documents",
+    href: "/documents#trademark",
+    label: "Товарный знак",
+  },
+  {
+    href: "/documents#project-documents",
     label: "Документы проекта",
   },
   {
-    href: "/#brief",
-    label: "Рассчитать проект / заполнить бриф",
+    href: "/documents#details",
+    label: "Реквизиты",
   },
   {
-    href: "/clients/requisites",
-    label: "Реквизиты",
+    href: "/brief",
+    label: "Рассчитать проект",
   },
 ];
 
