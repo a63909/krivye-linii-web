@@ -4,36 +4,44 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import ClientsMenu from "../clients-menu";
 
 function ArrowIcon() {
   return <span aria-hidden="true">↗</span>;
 }
 
 type AboutHeaderProps = {
-  active?: "about" | null;
+  active?: "about" | "clients" | null;
 };
 
 export default function AboutHeader({ active = "about" }: AboutHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [clientsOpen, setClientsOpen] = useState(false);
 
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen && !clientsOpen) return;
 
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMenuOpen(false);
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        setClientsOpen(false);
+      }
     };
 
     const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    if (menuOpen) document.body.style.overflow = "hidden";
     window.addEventListener("keydown", closeOnEscape);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      if (menuOpen) document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [menuOpen]);
+  }, [menuOpen, clientsOpen]);
 
-  const closeMenu = () => setMenuOpen(false);
+  const closeMenu = () => {
+    setMenuOpen(false);
+    setClientsOpen(false);
+  };
 
   return (
     <header className="site-header">
@@ -59,6 +67,13 @@ export default function AboutHeader({ active = "about" }: AboutHeaderProps) {
         <Link href="/#services" onClick={closeMenu}>Услуги</Link>
         <Link href="/#prices" onClick={closeMenu}>Цены</Link>
         <Link href="/#process" onClick={closeMenu}>Процесс</Link>
+        <ClientsMenu
+          id="about-clients-navigation"
+          open={clientsOpen}
+          active={active === "clients"}
+          onToggle={() => setClientsOpen((value) => !value)}
+          onNavigate={closeMenu}
+        />
         <Link
           href="/about"
           aria-current={active === "about" ? "page" : undefined}
@@ -74,7 +89,10 @@ export default function AboutHeader({ active = "about" }: AboutHeaderProps) {
       <button
         className={menuOpen ? "menu-button is-open" : "menu-button"}
         type="button"
-        onClick={() => setMenuOpen((value) => !value)}
+        onClick={() => {
+          setMenuOpen((value) => !value);
+          setClientsOpen(false);
+        }}
         aria-expanded={menuOpen}
         aria-controls="about-navigation"
         aria-label={menuOpen ? "Закрыть меню" : "Открыть меню"}
