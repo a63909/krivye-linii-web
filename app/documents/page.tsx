@@ -82,7 +82,7 @@ const documentTemplates = [
 export default function DocumentsPage() {
   return (
     <div className="site-shell documents-shell">
-      <AboutHeader active={null} />
+      <AboutHeader active="clients" />
 
       <main className="documents-page">
         <section className="documents-hero">
@@ -106,7 +106,10 @@ export default function DocumentsPage() {
           </div>
         </section>
 
-        <section className="documents-trademark documents-section">
+        <section
+          className="documents-trademark documents-section"
+          id="trademark"
+        >
           <div className="documents-section-heading">
             <p>01 / ПРАВО НА БРЕНД</p>
             <h2>Товарный знак «Кривые Линии» зарегистрирован.</h2>
@@ -175,7 +178,7 @@ export default function DocumentsPage() {
           </div>
         </section>
 
-        <section className="documents-requisites">
+        <section className="documents-requisites" id="details">
           <div className="documents-section-heading documents-section-heading-light">
             <p>02 / РЕКВИЗИТЫ</p>
             <h2>Сведения об исполнителе.</h2>
@@ -210,7 +213,10 @@ export default function DocumentsPage() {
           </div>
         </section>
 
-        <section className="documents-templates documents-section">
+        <section
+          className="documents-templates documents-section"
+          id="project-documents"
+        >
           <div className="documents-section-heading">
             <p>04 / ШАБЛОНЫ ДОКУМЕНТОВ</p>
             <h2>Документы, с которых начинается спокойная работа.</h2>
