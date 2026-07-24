@@ -123,9 +123,6 @@ export default function SitesServicePage() {
           <div className={styles.visualMain}>
             <img src="/images/services/sites/hero-cover.png" alt="Примеры сайтов и цифровых интерфейсов" />
           </div>
-          <div className={styles.visualSide}>
-            <img src={projects[2].image} alt="Интерфейс платформы Atlas Node" />
-          </div>
           <span className={styles.visualLabel}>DESIGN / CODE / LAUNCH</span>
         </div>
       </section>
