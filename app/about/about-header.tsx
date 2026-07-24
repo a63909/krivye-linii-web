@@ -5,6 +5,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import ClientsMenu from "../clients-menu";
+import ServicesMenu from "../services-menu";
 
 function ArrowIcon() {
   return <span aria-hidden="true">↗</span>;
@@ -16,14 +17,16 @@ type AboutHeaderProps = {
 
 export default function AboutHeader({ active = "about" }: AboutHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [servicesOpen, setServicesOpen] = useState(false);
   const [clientsOpen, setClientsOpen] = useState(false);
 
   useEffect(() => {
-    if (!menuOpen && !clientsOpen) return;
+    if (!menuOpen && !servicesOpen && !clientsOpen) return;
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setMenuOpen(false);
+        setServicesOpen(false);
         setClientsOpen(false);
       }
     };
@@ -36,10 +39,11 @@ export default function AboutHeader({ active = "about" }: AboutHeaderProps) {
       if (menuOpen) document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [menuOpen, clientsOpen]);
+  }, [menuOpen, servicesOpen, clientsOpen]);
 
   const closeMenu = () => {
     setMenuOpen(false);
+    setServicesOpen(false);
     setClientsOpen(false);
   };
 
@@ -64,14 +68,25 @@ export default function AboutHeader({ active = "about" }: AboutHeaderProps) {
         aria-label="Главное меню"
       >
         <Link href="/#portfolio" onClick={closeMenu}>Работы</Link>
-        <Link href="/#services" onClick={closeMenu}>Услуги</Link>
+        <ServicesMenu
+          id="about-services-navigation"
+          open={servicesOpen}
+          onToggle={() => {
+            setServicesOpen((value) => !value);
+            setClientsOpen(false);
+          }}
+          onNavigate={closeMenu}
+        />
         <Link href="/#prices" onClick={closeMenu}>Цены</Link>
         <Link href="/#process" onClick={closeMenu}>Процесс</Link>
         <ClientsMenu
           id="about-clients-navigation"
           open={clientsOpen}
           active={active === "clients"}
-          onToggle={() => setClientsOpen((value) => !value)}
+          onToggle={() => {
+            setClientsOpen((value) => !value);
+            setServicesOpen(false);
+          }}
           onNavigate={closeMenu}
         />
         <Link
@@ -91,6 +106,7 @@ export default function AboutHeader({ active = "about" }: AboutHeaderProps) {
         type="button"
         onClick={() => {
           setMenuOpen((value) => !value);
+          setServicesOpen(false);
           setClientsOpen(false);
         }}
         aria-expanded={menuOpen}

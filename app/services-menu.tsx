@@ -9,7 +9,7 @@ type ServicesMenuProps = {
 
 const serviceLinks = [
   { label: "Сайты и интернет-магазины", href: "/services/sites" },
-  { label: "Android-приложения", href: "/#services" },
+  { label: "Android-приложения", href: "/services/android" },
   { label: "Веб-сервисы", href: "/#services" },
   { label: "UX/UI и редизайн", href: "/#services" },
   { label: "Интеграции и автоматизация", href: "/#services" },
