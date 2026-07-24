@@ -121,7 +121,7 @@ export default function SitesServicePage() {
 
         <div className={styles.heroVisual} aria-label="Примеры интерфейсов">
           <div className={styles.visualMain}>
-            <img src={projects[0].image} alt="Интерфейс сайта Northline Residence" />
+            <img src="/images/services/sites/hero-cover.png" alt="Примеры сайтов и цифровых интерфейсов" />
           </div>
           <div className={styles.visualSide}>
             <img src={projects[2].image} alt="Интерфейс платформы Atlas Node" />
