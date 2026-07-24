@@ -126,9 +126,9 @@ export default function AndroidServicePage() {
           <Link href="/#brief">Рассчитать приложение <span aria-hidden="true">↗</span></Link>
         </div>
         <div className={styles.flow} aria-label="Пользовательский сценарий приложения">
-          <div className={styles.flowCard}><span>01 / ВХОД</span><strong>Быстрый старт</strong><p>Телефон или биометрия</p><i>→</i></div>
+          <div className={styles.flowCard}><span>01 / ВХОД</span><strong>Быстрый старт</strong><p>Биометрия или PIN-код</p><i>→</i></div>
           <div className={`${styles.flowCard} ${styles.flowCardActive}`}><span>02 / ДЕЙСТВИЕ</span><strong>Главная задача</strong><p>Один ясный маршрут</p><i>→</i></div>
-          <div className={styles.flowCard}><span>03 / РЕЗУЛЬТАТ</span><strong>Понятный итог</strong><p>Статус и следующий шаг</p><i>✓</i></div>
+          <div className={styles.flowCard}><span>03 / РЕЗУЛЬТАТ</span><strong>Понятный итог</strong><p>Результат и дальнейшее действие</p><i>✓</i></div>
         </div>
       </section>
 
