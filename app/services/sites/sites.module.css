@@ -313,6 +313,194 @@
   line-height: 1.65;
 }
 
+.commerce {
+  min-height: 850px;
+  padding: 110px 36px;
+  display: grid;
+  grid-template-columns: minmax(360px, 0.78fr) minmax(560px, 1.22fr);
+  gap: 80px;
+  align-items: center;
+  overflow: hidden;
+  background: var(--yellow);
+  color: var(--ink);
+}
+
+.commerce .sectionNumber {
+  color: rgba(9, 11, 10, 0.48);
+}
+
+.commerceCopy {
+  max-width: 680px;
+}
+
+.commerceCopy h2 {
+  margin: 44px 0 28px;
+  font: 500 clamp(50px, 5vw, 92px) / 0.94 var(--font-cormorant), serif;
+  letter-spacing: -0.035em;
+}
+
+.commerceLead {
+  max-width: 620px;
+  margin: 0;
+  color: rgba(9, 11, 10, 0.68);
+  font-size: 19px;
+  line-height: 1.65;
+}
+
+.commerceFeatures {
+  margin: 38px 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+}
+
+.commerceFeatures li {
+  padding: 11px 14px;
+  border: 1px solid rgba(9, 11, 10, 0.3);
+  font: 500 10px/1 var(--font-geist-mono), monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.commerceButton {
+  width: min(100%, 330px);
+  min-height: 64px;
+  padding: 0 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  background: var(--ink);
+  color: var(--paper-bright);
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 180ms ease, color 180ms ease;
+}
+
+.commerceButton:hover {
+  background: var(--pink);
+  color: var(--ink);
+}
+
+.commerceVisual {
+  min-height: 650px;
+  position: relative;
+}
+
+.shopWindow {
+  position: absolute;
+  inset: 0 68px 46px 0;
+  padding: 14px;
+  background: var(--paper-bright);
+  color: #493b2d;
+  border: 1px solid rgba(9, 11, 10, 0.22);
+  box-shadow: 0 34px 80px rgba(45, 58, 18, 0.2);
+  transform: rotate(1.1deg);
+  transform-origin: center;
+}
+
+.shopTop {
+  height: 66px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.shopTop strong {
+  font: 600 38px/1 var(--font-cormorant), serif;
+  letter-spacing: 0.04em;
+}
+
+.shopTop span {
+  font-size: 11px;
+}
+
+.shopTop i {
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(73, 59, 45, 0.38);
+  border-radius: 50%;
+  font: 500 10px/1 var(--font-geist-mono), monospace;
+  font-style: normal;
+}
+
+.shopWindow > img {
+  width: 100%;
+  height: 430px;
+  display: block;
+  object-fit: cover;
+}
+
+.shopPanel {
+  min-height: 80px;
+  padding: 14px 18px 6px;
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.shopPanel div {
+  display: grid;
+}
+
+.shopPanel small,
+.shopPanel > span {
+  font: 500 9px/1.3 var(--font-geist-mono), monospace;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.shopPanel strong {
+  font: 500 30px/0.95 var(--font-cormorant), serif;
+}
+
+.shopPanel > span {
+  color: rgba(73, 59, 45, 0.58);
+}
+
+.cartCard {
+  width: 250px;
+  padding: 24px;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  gap: 9px;
+  background: var(--ink);
+  color: var(--paper-bright);
+  border: 1px solid rgba(250, 248, 242, 0.18);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+
+.cartCard span,
+.cartCard i {
+  color: rgba(250, 248, 242, 0.48);
+  font: 500 9px/1.3 var(--font-geist-mono), monospace;
+  letter-spacing: 0.14em;
+  font-style: normal;
+}
+
+.cartCard b {
+  font-size: 17px;
+}
+
+.cartCard strong {
+  font: 500 38px/1 var(--font-cormorant), serif;
+}
+
+.cartCard i {
+  color: var(--yellow);
+}
 .cases {
   background: var(--ink);
 }
@@ -542,6 +730,18 @@
     font-size: clamp(62px, 7.5vw, 88px);
   }
 
+  .commerce {
+    grid-template-columns: 1fr;
+    gap: 56px;
+  }
+
+  .commerceCopy {
+    max-width: 760px;
+  }
+
+  .commerceVisual {
+    min-height: 650px;
+  }
   .sectionIntro {
     grid-template-columns: 0.25fr 1.1fr 0.65fr;
     gap: 28px;
@@ -572,6 +772,9 @@
     background: #090b0a url("/images/services/sites/hero-background.png") right center / auto 100% no-repeat;
   }
 
+  .commerce {
+    padding: 78px 24px;
+  }
   .formats,
   .scope,
   .cases,
@@ -621,6 +824,90 @@
     padding: calc(var(--header-height) + 54px) 24px 28px;
   }
 
+  .commerce {
+    padding: 64px 24px;
+    gap: 46px;
+  }
+
+  .commerceCopy h2 {
+    margin: 36px 0 24px;
+    font-size: clamp(44px, 13vw, 64px);
+  }
+
+  .commerceLead {
+    font-size: 17px;
+  }
+
+  .commerceFeatures {
+    margin: 30px 0;
+    gap: 6px;
+  }
+
+  .commerceFeatures li {
+    padding: 10px 11px;
+    font-size: 9px;
+  }
+
+  .commerceButton {
+    width: 100%;
+  }
+
+  .commerceVisual {
+    min-height: 450px;
+    margin-inline: -24px;
+  }
+
+  .shopWindow {
+    inset: 0 18px 42px 16px;
+    padding: 10px;
+    transform: rotate(0.7deg);
+  }
+
+  .shopTop {
+    height: 54px;
+    padding: 0 8px;
+  }
+
+  .shopTop strong {
+    font-size: 30px;
+  }
+
+  .shopTop span {
+    display: none;
+  }
+
+  .shopTop i {
+    width: 34px;
+    height: 34px;
+  }
+
+  .shopWindow > img {
+    height: 260px;
+  }
+
+  .shopPanel {
+    min-height: 74px;
+    padding: 12px 10px 2px;
+  }
+
+  .shopPanel strong {
+    font-size: 25px;
+  }
+
+  .shopPanel > span {
+    display: none;
+  }
+
+  .cartCard {
+    width: 190px;
+    padding: 18px;
+    right: 0;
+    bottom: 0;
+  }
+
+  .cartCard strong {
+    font-size: 32px;
+  }
   .eyebrow {
     font-size: 9px;
     letter-spacing: 0.12em;

@@ -166,10 +166,64 @@ export default function SitesServicePage() {
         </div>
       </section>
 
+      <section className={styles.commerce}>
+        <div className={styles.commerceCopy}>
+          <p className={styles.sectionNumber}>03 / ИНТЕРНЕТ-МАГАЗИНЫ</p>
+          <h2>Покупка должна быть короткой и понятной.</h2>
+          <p className={styles.commerceLead}>
+            Проектируем магазин как единый маршрут: человек быстро находит товар,
+            понимает его ценность и без лишних шагов оформляет заказ.
+          </p>
+          <ul className={styles.commerceFeatures} aria-label="Возможности интернет-магазина">
+            <li>Каталог</li>
+            <li>Фильтры</li>
+            <li>Поиск</li>
+            <li>Карточки товаров</li>
+            <li>Корзина</li>
+            <li>Онлайн-оплата</li>
+            <li>Доставка</li>
+            <li>Личный кабинет</li>
+            <li>Перенос товаров</li>
+            <li>Аналитика</li>
+          </ul>
+          <Link className={styles.commerceButton} href="/#brief">
+            Рассчитать магазин <span aria-hidden="true">↗</span>
+          </Link>
+        </div>
+
+        <div className={styles.commerceVisual} aria-label="Пример дизайна интернет-магазина VELA">
+          <div className={styles.shopWindow}>
+            <div className={styles.shopTop}>
+              <strong>VELA</strong>
+              <span>Каталог&nbsp;&nbsp; Подписка&nbsp;&nbsp; О бренде</span>
+              <i>02</i>
+            </div>
+            <img
+              src="/images/services/sites/commerce-vela.webp"
+              alt="Интернет-магазин кофе VELA"
+            />
+            <div className={styles.shopPanel}>
+              <div>
+                <small>ETHIOPIA</small>
+                <strong>Guji Natural</strong>
+                <span>1 290 ₽</span>
+              </div>
+              <span>Карточка товара / 01</span>
+            </div>
+          </div>
+          <div className={styles.cartCard}>
+            <span>КОРЗИНА</span>
+            <b>2 товара</b>
+            <strong>2 580 ₽</strong>
+            <i>Оплата подключена ✓</i>
+          </div>
+        </div>
+      </section>
+
       <section className={styles.cases}>
         <div className={styles.casesHeader}>
           <div>
-            <p className={styles.sectionNumber}>03 / ВЫБРАННЫЕ РАБОТЫ</p>
+            <p className={styles.sectionNumber}>04 / ВЫБРАННЫЕ РАБОТЫ</p>
             <h2>Система важнее отдельного красивого экрана.</h2>
           </div>
           <Link href="/#portfolio">Все работы <span aria-hidden="true">↗</span></Link>
@@ -195,7 +249,7 @@ export default function SitesServicePage() {
 
       <section className={styles.process}>
         <div className={styles.processIntro}>
-          <p className={styles.sectionNumber}>04 / ПРОЦЕСС</p>
+          <p className={styles.sectionNumber}>05 / ПРОЦЕСС</p>
           <h2>Прозрачный маршрут от задачи до работающего сайта.</h2>
           <p>Каждый этап имеет понятный результат. Вы видите движение проекта и принимаете решения до следующего шага.</p>
         </div>
@@ -212,7 +266,7 @@ export default function SitesServicePage() {
 
       <section className={styles.faq}>
         <div>
-          <p className={styles.sectionNumber}>05 / ВОПРОСЫ</p>
+          <p className={styles.sectionNumber}>06 / ВОПРОСЫ</p>
           <h2>До старта всё должно быть понятно.</h2>
         </div>
         <div className={styles.faqList}>
