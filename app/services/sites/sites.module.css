@@ -11,21 +11,12 @@
   grid-template-columns: minmax(520px, 0.92fr) minmax(560px, 1.08fr);
   gap: 54px;
   position: relative;
-  background: radial-gradient(circle at 76% 42%, #283127 0, #111511 30%, #090b0a 65%);
+  background: #090b0a url("/images/services/sites/hero-background.png") center / cover no-repeat;
   border-bottom: 1px solid var(--line-dark);
 }
 
 .hero::before {
-  content: "";
-  position: absolute;
-  inset: var(--header-height) 0 0;
-  opacity: 0.16;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.13) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.13) 1px, transparent 1px);
-  background-size: 84px 84px;
-  mask-image: linear-gradient(to right, #000, transparent 72%);
+  content: none;
 }
 
 .heroCopy,
@@ -161,35 +152,8 @@
 .heroVisual {
   align-self: center;
   min-height: 650px;
-  background: #161818;
-  border: 1px solid rgba(250, 248, 242, 0.18);
-}
-
-.visualMain {
-  position: absolute;
-  inset: 42px 82px 96px 32px;
-  overflow: hidden;
-  border: 1px solid rgba(250, 248, 242, 0.22);
-}
-
-.visualMain img,
-.visualSide img {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-}
-
-.visualSide {
-  position: absolute;
-  width: 38%;
-  height: 40%;
-  right: 22px;
-  bottom: 26px;
-  overflow: hidden;
-  background: var(--ink);
-  border: 8px solid #161818;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.46);
+  background: transparent;
+  border: 1px solid transparent;
 }
 
 .visualLabel {
@@ -654,10 +618,6 @@
     padding: calc(var(--header-height) + 54px) 24px 28px;
   }
 
-  .hero::before {
-    background-size: 88px 88px;
-  }
-
   .eyebrow {
     font-size: 9px;
     letter-spacing: 0.12em;
@@ -708,18 +668,6 @@
 
   .heroVisual {
     min-height: 390px;
-  }
-
-  .visualMain {
-    inset: 18px 38px 72px 18px;
-  }
-
-  .visualSide {
-    width: 48%;
-    height: 42%;
-    right: 12px;
-    bottom: 14px;
-    border-width: 5px;
   }
 
   .visualLabel {

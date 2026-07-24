@@ -120,9 +120,6 @@ export default function SitesServicePage() {
         </div>
 
         <div className={styles.heroVisual} aria-label="Примеры интерфейсов">
-          <div className={styles.visualMain}>
-            <img src="/images/services/sites/hero-cover.png" alt="Примеры сайтов и цифровых интерфейсов" />
-          </div>
           <span className={styles.visualLabel}>DESIGN / CODE / LAUNCH</span>
         </div>
       </section>
