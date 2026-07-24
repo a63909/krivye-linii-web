@@ -321,7 +321,7 @@
   gap: 80px;
   align-items: center;
   overflow: hidden;
-  background: var(--yellow);
+  background: #d8ff74;
   color: var(--ink);
 }
 
