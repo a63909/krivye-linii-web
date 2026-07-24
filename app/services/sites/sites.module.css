@@ -165,9 +165,8 @@
 
 .visualMain {
   position: absolute;
-  inset: 42px 82px 96px 32px;
+  inset: 0;
   overflow: hidden;
-  border: 1px solid rgba(250, 248, 242, 0.22);
 }
 
 .visualMain img,
@@ -709,7 +708,7 @@
   }
 
   .visualMain {
-    inset: 18px 38px 72px 18px;
+    inset: 0;
   }
 
   .visualSide {
