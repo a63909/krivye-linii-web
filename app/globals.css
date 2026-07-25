@@ -286,6 +286,21 @@ button {
   color: var(--paper-bright);
 }
 
+.clients-submenu .clients-submenu-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  background: var(--yellow);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.clients-submenu .clients-submenu-cta:hover {
+  background: var(--paper-bright);
+  color: var(--ink);
+}
+
 @media (min-width: 901px) {
   .clients-menu:hover .clients-submenu,
   .clients-menu:focus-within .clients-submenu,
@@ -1850,7 +1865,7 @@ button {
   }
 
   .clients-menu.is-open .clients-submenu {
-    max-height: 240px;
+    max-height: 320px;
     padding-bottom: 12px;
     pointer-events: auto;
   }
@@ -1860,6 +1875,12 @@ button {
     color: rgba(250, 248, 242, 0.66);
     font-size: 14px;
     white-space: normal;
+  }
+
+  .clients-submenu .clients-submenu-cta {
+    margin-top: 8px;
+    padding: 12px 14px;
+    color: var(--ink);
   }
 
   .header-cta {

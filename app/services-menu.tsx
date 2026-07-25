@@ -14,6 +14,7 @@ const serviceLinks = [
   { label: "UX/UI и редизайн", href: "/services/ux-ui-redesign" },
   { label: "Интеграции и автоматизация", href: "/services/integrations-automation" },
   { label: "Брендинг и поддержка", href: "/services/branding-support" },
+  { label: "Кейсы", href: "/#portfolio", featured: true },
 ];
 
 export default function ServicesMenu({
@@ -37,8 +38,14 @@ export default function ServicesMenu({
 
       <div className="clients-submenu" id={id}>
         {serviceLinks.map((item) => (
-          <a href={item.href} key={item.label} onClick={onNavigate}>
+          <a
+            className={item.featured ? "clients-submenu-cta" : undefined}
+            href={item.href}
+            key={item.label}
+            onClick={onNavigate}
+          >
             {item.label}
+            {item.featured && <span aria-hidden="true">↗</span>}
           </a>
         ))}
       </div>
