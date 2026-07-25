@@ -4,6 +4,9 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Согласие на обработку данных",
   description: "Условия согласия на обработку персональных данных на сайте Кривые Линии WEB.",
+  alternates: {
+    canonical: "/consent",
+  },
 };
 
 export default function ConsentPage() {

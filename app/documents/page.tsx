@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "Документы и реквизиты",
   description:
     "Документы, реквизиты и юридическая информация студии «Кривые Линии WEB»: сведения об исполнителе, праве на бренд и порядке работы.",
+  alternates: {
+    canonical: "/documents",
+  },
 };
 
 const requisites = [

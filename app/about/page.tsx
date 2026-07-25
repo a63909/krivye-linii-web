@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: "О студии",
   description:
     "Кривые Линии WEB — цифровое направление бренда «Кривые Линии». Стратегия, веб-дизайн, разработка и поддержка цифровых продуктов для бизнеса.",
+  alternates: {
+    canonical: "/about",
+  },
 };
 
 const principles = [
