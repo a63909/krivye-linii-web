@@ -10,10 +10,10 @@ type ServicesMenuProps = {
 const serviceLinks = [
   { label: "Сайты и интернет-магазины", href: "/services/sites" },
   { label: "Android-приложения", href: "/services/android" },
-  { label: "Веб-сервисы", href: "/#services" },
-  { label: "UX/UI и редизайн", href: "/#services" },
-  { label: "Интеграции и автоматизация", href: "/#services" },
-  { label: "Брендинг и поддержка", href: "/#services" },
+  { label: "Веб-сервисы", href: "/services/web-services" },
+  { label: "UX/UI и редизайн", href: "/services/ux-ui-redesign" },
+  { label: "Интеграции и автоматизация", href: "/services/integrations-automation" },
+  { label: "Брендинг и поддержка", href: "/services/branding-support" },
 ];
 
 export default function ServicesMenu({

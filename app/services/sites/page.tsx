@@ -285,61 +285,6 @@ export default function SitesServicePage() {
         <p>Предварительно оценим состав работ, сроки и бюджет без обязательств с вашей стороны.</p>
         <Link href="/#brief">Сформировать заявку <span aria-hidden="true">↗</span></Link>
       </section>
-
-      <footer className="site-footer">
-        <div className="footer-main">
-          <div className="footer-brand-block">
-            <div className="footer-brand">
-              <img
-                src="/images/brand/krivye-linii-web-transparent.png"
-                alt="Кривые Линии WEB"
-                width={1020}
-                height={720}
-              />
-            </div>
-            <p>
-              Проектируем цифровой образ бизнеса — от позиционирования и
-              айдентики до запуска сайта и дальнейшего развития.
-            </p>
-            <div className="footer-tags" aria-label="Компетенции">
-              <span>WEB</span><span>BRAND</span><span>CODE</span>
-            </div>
-          </div>
-
-          <section className="footer-column footer-services-column">
-            <span className="footer-column-label">Услуги</span>
-            <Link href="/services/sites">Сайты и интернет-магазины</Link>
-            <Link href="/#services">UX/UI и редизайн</Link>
-            <Link href="/#services">Логотипы и айдентика</Link>
-            <Link href="/#services">Поддержка и развитие</Link>
-          </section>
-
-          <nav className="footer-column footer-navigation" aria-label="Навигация в подвале">
-            <span className="footer-column-label">Навигация</span>
-            <Link href="/#portfolio">Работы</Link>
-            <Link href="/#services">Услуги</Link>
-            <Link href="/#prices">Цены</Link>
-            <Link href="/#process">Процесс</Link>
-            <Link href="/about">О нас</Link>
-          </nav>
-
-          <section className="footer-column footer-contact-column">
-            <span className="footer-column-label">Новый проект</span>
-            <Link className="footer-email" href="/#brief">Обсудить задачу ↗</Link>
-            <p>Москва · работаем по России</p>
-            <p className="footer-status"><i /> Принимаем новые проекты</p>
-            <p>Фиксируем сроки, стоимость и этапы до начала работ.</p>
-          </section>
-        </div>
-
-        <div className="footer-bottom">
-          <p>© 2026 «Кривые Линии WEB». Все права защищены.</p>
-          <div>
-            <Link href="/privacy">Политика конфиденциальности</Link>
-            <Link href="/consent">Согласие на обработку данных</Link>
-          </div>
-        </div>
-      </footer>
     </main>
   );
 }

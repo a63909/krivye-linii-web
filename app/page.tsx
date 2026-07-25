@@ -575,61 +575,6 @@ export default function Home() {
           </form>
         </section>
       </main>
-
-      <footer className="site-footer">
-        <div className="footer-main">
-          <div className="footer-brand-block">
-            <div className="footer-brand">
-              <img
-                src="/images/brand/krivye-linii-web-transparent.png"
-                alt="Кривые Линии WEB"
-                width={1020}
-                height={720}
-              />
-            </div>
-            <p>Проектируем цифровой образ бизнеса — от позиционирования и айдентики до запуска сайта и дальнейшего развития.</p>
-            <div className="footer-tags" aria-label="Направления студии">
-              <span>WEB</span><span>BRAND</span><span>CODE</span>
-            </div>
-          </div>
-          <section className="footer-column footer-services-column">
-            <span className="footer-column-label">Услуги</span>
-            <a href="#services">Сайты под ключ</a>
-            <a href="#services">UX/UI и редизайн</a>
-            <a href="#services">Логотипы и айдентика</a>
-            <a href="#services">Поддержка и развитие</a>
-          </section>
-          <nav className="footer-column footer-navigation-column" aria-label="Навигация в подвале">
-            <span className="footer-column-label">Навигация</span>
-            <a href="#portfolio">Работы</a>
-            <a href="#services">Услуги</a>
-            <a href="#prices">Цены</a>
-            <a href="#brief">Контакты</a>
-            <a href="/about">О нас</a>
-            <a href="/documents">Документы</a>
-          </nav>
-          <section className="footer-column footer-contact-column">
-            <span className="footer-column-label">Контакты</span>
-            <a className="footer-email" href="mailto:web@curvedlines.ru">web@curvedlines.ru</a>
-            <div className="footer-legal-details">
-              <strong>ИП Гладышев Андрей Иванович</strong>
-              <span>ИНН 860219643299</span>
-              <span>ОГРНИП 3198611700068507</span>
-              <span>Юридический адрес: Москва, Пресненская набережная, д. 12</span>
-            </div>
-            <p>Москва · работаем по России</p>
-            <p className="footer-status"><i /> Принимаем новые проекты</p>
-            <p>Фиксируем сроки, стоимость и этапы до начала работ.</p>
-          </section>
-        </div>
-        <div className="footer-bottom">
-          <p>© 2026 «Кривые Линии WEB». Все права защищены.</p>
-          <div>
-            <a href="/privacy">Политика конфиденциальности</a>
-            <a href="/consent">Согласие на обработку данных</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

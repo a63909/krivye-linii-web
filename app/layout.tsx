@@ -7,6 +7,7 @@ import {
   Roboto,
 } from "next/font/google";
 import "./globals.css";
+import SiteFooter from "./site-footer";
 import YandexMetrika from "./yandex-metrika";
 
 const geistSans = Geist({
@@ -105,6 +106,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} ${manrope.variable} ${roboto.variable} antialiased`}
       >
         {children}
+        <SiteFooter />
         <YandexMetrika counterId={metrikaId} />
       </body>
     </html>
