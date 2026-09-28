@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import AboutHeader from "../../about/about-header";
+import { breadcrumbJsonLd, JsonLd, serviceJsonLd } from "../../seo";
 import styles from "./android.module.css";
 
 export const metadata: Metadata = {
@@ -47,6 +48,15 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default function AndroidServicePage() {
   return (
     <main className={styles.page}>
+      <JsonLd data={[
+        breadcrumbJsonLd([{ name: "Главная", path: "/" }, { name: "Android-приложения", path: "/services/android" }]),
+        serviceJsonLd({
+          name: "Разработка Android-приложений",
+          description: "Проектирование и разработка Android-приложений для клиентов, сотрудников и цифровых сервисов — от прототипа до публикации и поддержки.",
+          path: "/services/android",
+          serviceType: "Разработка Android-приложений",
+        }),
+      ]} />
       <AboutHeader active={null} />
 
       <section className={styles.hero}>

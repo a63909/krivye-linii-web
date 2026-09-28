@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import AboutHeader from "../../about/about-header";
+import { breadcrumbJsonLd, JsonLd, serviceJsonLd } from "../../seo";
 import styles from "./web-services.module.css";
 
 export const metadata: Metadata = {
@@ -72,6 +73,15 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 export default function WebServicesPage() {
   return (
     <main className={styles.page}>
+      <JsonLd data={[
+        breadcrumbJsonLd([{ name: "Главная", path: "/" }, { name: "Веб-сервисы", path: "/services/web-services" }]),
+        serviceJsonLd({
+          name: "Разработка веб-сервисов",
+          description: "Проектирование и разработка личных кабинетов, B2B-порталов, CRM, систем бронирования и внутренних веб-сервисов.",
+          path: "/services/web-services",
+          serviceType: "Разработка веб-сервисов",
+        }),
+      ]} />
       <AboutHeader active={null} />
 
       <section className={styles.hero}>

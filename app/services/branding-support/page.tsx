@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import AboutHeader from "../../about/about-header";
+import { breadcrumbJsonLd, JsonLd, serviceJsonLd } from "../../seo";
 import styles from "./branding-support.module.css";
 
 export const metadata: Metadata = {
@@ -69,6 +70,15 @@ function Label({ children }: { children: React.ReactNode }) {
 export default function BrandingSupportPage() {
   return (
     <main className={styles.page}>
+      <JsonLd data={[
+        breadcrumbJsonLd([{ name: "Главная", path: "/" }, { name: "Брендинг и поддержка", path: "/services/branding-support" }]),
+        serviceJsonLd({
+          name: "Брендинг и поддержка",
+          description: "Создание айдентики, визуальных систем и бренд-материалов, а также поддержка сайтов и цифровых продуктов после запуска.",
+          path: "/services/branding-support",
+          serviceType: "Брендинг и дизайн-поддержка",
+        }),
+      ]} />
       <AboutHeader active={null} />
 
       <section className={styles.hero}>

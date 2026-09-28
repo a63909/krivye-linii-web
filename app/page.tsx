@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import HomePage from "./home-page";
+import { JsonLd, organizationJsonLd, professionalServiceJsonLd } from "./seo";
 
 export const metadata: Metadata = {
   title: "Создание сайтов под ключ и цифровых сервисов — Кривые Линии WEB",
@@ -28,5 +29,10 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <HomePage />;
+  return (
+    <>
+      <JsonLd data={[organizationJsonLd, professionalServiceJsonLd]} />
+      <HomePage />
+    </>
+  );
 }

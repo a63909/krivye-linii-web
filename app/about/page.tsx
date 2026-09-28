@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import AboutHeader from "./about-header";
+import { breadcrumbJsonLd, JsonLd } from "../seo";
 
 export const metadata: Metadata = {
   title: "О студии",
@@ -10,6 +11,15 @@ export const metadata: Metadata = {
     "Кривые Линии WEB — цифровое направление бренда «Кривые Линии». Стратегия, веб-дизайн, разработка и поддержка цифровых продуктов для бизнеса.",
   alternates: {
     canonical: "/about",
+  },
+  openGraph: {
+    type: "website",
+    locale: "ru_RU",
+    url: "/about",
+    siteName: "Кривые Линии WEB",
+    title: "О студии — Кривые Линии WEB",
+    description: "Стратегия, веб-дизайн и разработка цифровых продуктов для бизнеса в единой системе.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Кривые Линии WEB — о студии" }],
   },
 };
 
@@ -56,6 +66,7 @@ export default function AboutPage() {
       <AboutHeader />
 
       <main className="about-page">
+        <JsonLd data={breadcrumbJsonLd([{ name: "Главная", path: "/" }, { name: "О студии", path: "/about" }])} />
         <section className="about-hero">
           <div className="about-hero-copy">
             <p className="about-kicker">О СТУДИИ / КРИВЫЕ ЛИНИИ WEB</p>

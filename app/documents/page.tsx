@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import AboutHeader from "../about/about-header";
+import { breadcrumbJsonLd, JsonLd } from "../seo";
 
 export const metadata: Metadata = {
   title: "Документы и реквизиты",
@@ -10,6 +11,15 @@ export const metadata: Metadata = {
     "Документы, реквизиты и юридическая информация студии «Кривые Линии WEB»: сведения об исполнителе, праве на бренд и порядке работы.",
   alternates: {
     canonical: "/documents",
+  },
+  openGraph: {
+    type: "website",
+    locale: "ru_RU",
+    url: "/documents",
+    siteName: "Кривые Линии WEB",
+    title: "Документы и реквизиты — Кривые Линии WEB",
+    description: "Реквизиты, юридическая информация и шаблоны документов для работы с Кривые Линии WEB.",
+    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "Документы Кривые Линии WEB" }],
   },
 };
 
@@ -88,6 +98,7 @@ export default function DocumentsPage() {
       <AboutHeader active="clients" />
 
       <main className="documents-page">
+        <JsonLd data={breadcrumbJsonLd([{ name: "Главная", path: "/" }, { name: "Документы", path: "/documents" }])} />
         <section className="documents-hero">
           <p className="documents-kicker">ДОКУМЕНТЫ / КРИВЫЕ ЛИНИИ WEB</p>
           <div className="documents-hero-grid">
