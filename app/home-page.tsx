@@ -52,7 +52,7 @@ const services = [
 const packages = [
   {
     name: "Старт",
-    price: "59 000 ₽",
+    price: "от 59 000 ₽",
     lead: "Мини-лендинг",
     features: [
       "До 7 смысловых блоков",
@@ -63,7 +63,7 @@ const packages = [
   },
   {
     name: "Бизнес",
-    price: "89 000 ₽",
+    price: "от 89 000 ₽",
     lead: "Продающий лендинг",
     featured: true,
     features: [
@@ -75,7 +75,7 @@ const packages = [
   },
   {
     name: "Система",
-    price: "149 000 ₽",
+    price: "от 149 000 ₽",
     lead: "Сайт компании",
     features: [
       "До 7 страниц",
