@@ -4175,3 +4175,8 @@ button {
     grid-row: 2;
   }
 }
+
+/* Shared CTA interaction contract across light and dark sections. */
+.header-cta:is(:hover, :focus-visible), .button:not(:disabled):is(:hover, :focus-visible) { background: #f2df72; color: #090b0a; border-color: #f2df72; }
+.menu-button:is(:hover, :focus-visible) { background: #f2df72; }
+.menu-button:is(:hover, :focus-visible) i { background: #090b0a; }

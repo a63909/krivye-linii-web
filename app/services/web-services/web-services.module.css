@@ -1124,3 +1124,7 @@
 .page :global(.site-header) {
   background: #090c0b;
 }
+
+/* Match the shared yellow CTA hover and keyboard-focus state. */
+.heroActions a:first-child, .ctaCopy > a { transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease; }
+.heroActions a:first-child:is(:hover, :focus-visible), .ctaCopy > a:is(:hover, :focus-visible) { background: #f2df72; color: #090b0a; border-color: #f2df72; }
