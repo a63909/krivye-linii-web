@@ -410,6 +410,17 @@ export default function Home() {
                 </div>
               </article>
             ))}
+            <article className="service-card consultation-card" id="consultations">
+              <div>
+                <span className="service-number">07 / ОНЛАЙН</span>
+                <h3>Онлайн-консультации</h3>
+                <p>Разберём вопросы по сайту, дизайну или развитию проекта и поможем определить следующие шаги.</p>
+              </div>
+              <div className="consultation-details">
+                <strong>от 0 ₽</strong>
+                <p>Стоимость не фиксирована — согласуем индивидуально в зависимости от задачи и объёма консультации.</p>
+              </div>
+            </article>
           </div>
         </section>
 

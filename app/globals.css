@@ -1115,6 +1115,35 @@ button {
   font-size: 18px;
 }
 
+.consultation-card {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 32px 64px;
+}
+
+.consultation-card h3 {
+  margin-top: 32px;
+}
+
+.consultation-card p {
+  max-width: 560px;
+  color: rgba(250, 248, 242, 0.6);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.consultation-details strong {
+  font-size: clamp(36px, 4vw, 58px);
+  font-weight: 520;
+  letter-spacing: -0.05em;
+}
+
+.consultation-card:hover p {
+  color: rgba(9, 11, 10, 0.75);
+}
+
 .price-note {
   margin: 20px 0 0;
   color: #66645e;
@@ -2181,6 +2210,11 @@ button {
 
   .service-card h3 {
     margin-top: 38px;
+  }
+
+  .consultation-card {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
 
   .statement {
