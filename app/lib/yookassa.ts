@@ -1,8 +1,9 @@
-import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 
 const YOOKASSA_API_URL = "https://api.yookassa.ru/v3";
 const MIN_PAYMENT_KOPECKS = 100;
 const MAX_PAYMENT_KOPECKS = 70_000_000;
+const POS_LINK_PAYMENT_LIFETIME_MINUTES = 10;
 
 type YooKassaAmount = {
   value: string;
@@ -15,9 +16,10 @@ export type YooKassaPayment = {
   paid: boolean;
   amount: YooKassaAmount;
   description?: string;
-  confirmation?: {
+  confirmation?: { type?: string };
+  payment_method?: {
     type?: string;
-    confirmation_url?: string;
+    qrc_id?: string;
   };
   metadata?: Record<string, string>;
   cancellation_details?: {
@@ -25,6 +27,22 @@ export type YooKassaPayment = {
     reason?: string;
   };
 };
+
+type YooKassaPosLink = {
+  id: string;
+  status: "active" | "inactive";
+  payment?: {
+    id: string;
+    status: YooKassaPayment["status"];
+  };
+};
+
+export class PosLinkBusyError extends Error {
+  constructor(public readonly activePaymentId?: string) {
+    super("YOOKASSA_POS_LINK_BUSY");
+    this.name = "PosLinkBusyError";
+  }
+}
 
 const requiredEnv = (name: string) => {
   const value = process.env[name]?.trim();
@@ -86,14 +104,21 @@ export const normalizeRubles = (value: unknown) => {
   return (totalKopecks / 100).toFixed(2);
 };
 
-export const getPublicSiteUrl = () =>
-  (process.env.PUBLIC_SITE_URL || "https://web.curvedlines.ru").replace(/\/$/, "");
-
 const getBasicAuthorization = () => {
   const shopId = requiredEnv("YOOKASSA_SHOP_ID");
   const secretKey = requiredEnv("YOOKASSA_SECRET_KEY");
 
   return `Basic ${Buffer.from(`${shopId}:${secretKey}`).toString("base64")}`;
+};
+
+const getPosLinkId = () => {
+  const posLinkId = requiredEnv("YOOKASSA_POS_LINK_ID");
+
+  if (!/^pl-[a-zA-Z0-9-]{10,128}$/.test(posLinkId)) {
+    throw new Error("Invalid YOOKASSA_POS_LINK_ID");
+  }
+
+  return posLinkId;
 };
 
 const parseYooKassaResponse = async <T>(response: Response): Promise<T> => {
@@ -120,8 +145,36 @@ export const createConsultationPayment = async ({
   amount: string;
   consultationId: string;
 }) => {
+  const posLinkId = getPosLinkId();
+  const posLink = await getYooKassaPosLink(posLinkId);
+
+  if (posLink.status !== "active") {
+    throw new Error("YOOKASSA_POS_LINK_INACTIVE");
+  }
+
+  if (posLink.payment?.status === "pending") {
+    const activePayment = await getYooKassaPayment(posLink.payment.id);
+
+    if (
+      activePayment.metadata?.consultation_id === consultationId &&
+      activePayment.amount.value === amount
+    ) {
+      return {
+        payment: activePayment,
+        posLinkId,
+        expiresAt: null,
+        reused: true,
+      };
+    }
+
+    throw new PosLinkBusyError(posLink.payment.id);
+  }
+
+  const expiresAt = new Date(
+    Date.now() + POS_LINK_PAYMENT_LIFETIME_MINUTES * 60_000,
+  ).toISOString();
   const idempotenceKey = createHash("sha256")
-    .update(`consultation:${consultationId}:${amount}`)
+    .update(`pos-link:${posLinkId}:consultation:${consultationId}:${amount}`)
     .digest("hex");
 
   const response = await fetch(`${YOOKASSA_API_URL}/payments`, {
@@ -136,12 +189,12 @@ export const createConsultationPayment = async ({
         value: amount,
         currency: "RUB",
       },
-      payment_method_data: {
-        type: "sbp",
+      pos_link: {
+        id: posLinkId,
+        expires_at: expiresAt,
       },
       confirmation: {
-        type: "redirect",
-        return_url: `${getPublicSiteUrl()}/consultation/payment-result`,
+        type: "external",
       },
       capture: true,
       description: `Онлайн-консультация №${consultationId}`.slice(0, 128),
@@ -153,7 +206,29 @@ export const createConsultationPayment = async ({
     signal: AbortSignal.timeout(15_000),
   });
 
-  return parseYooKassaResponse<YooKassaPayment>(response);
+  const payment = await parseYooKassaResponse<YooKassaPayment>(response);
+
+  if (payment.status === "canceled") {
+    throw new PosLinkBusyError(payment.id);
+  }
+
+  return { payment, posLinkId, expiresAt, reused: false };
+};
+
+export const getYooKassaPosLink = async (posLinkId = getPosLinkId()) => {
+  if (!/^pl-[a-zA-Z0-9-]{10,128}$/.test(posLinkId)) {
+    throw new Error("INVALID_POS_LINK_ID");
+  }
+
+  const response = await fetch(`${YOOKASSA_API_URL}/pos_links/${posLinkId}`, {
+    headers: {
+      Authorization: getBasicAuthorization(),
+    },
+    cache: "no-store",
+    signal: AbortSignal.timeout(15_000),
+  });
+
+  return parseYooKassaResponse<YooKassaPosLink>(response);
 };
 
 export const getYooKassaPayment = async (paymentId: string) => {
@@ -172,33 +247,3 @@ export const getYooKassaPayment = async (paymentId: string) => {
   return parseYooKassaResponse<YooKassaPayment>(response);
 };
 
-const getSigningSecret = () => requiredEnv("PAYMENT_LINK_SIGNING_SECRET");
-
-export const createCheckoutToken = (paymentId: string, expiresAt: number) => {
-  const signature = createHmac("sha256", getSigningSecret())
-    .update(`${paymentId}.${expiresAt}`)
-    .digest("hex");
-
-  return `${expiresAt}.${signature}`;
-};
-
-export const verifyCheckoutToken = (paymentId: string, token: string | null) => {
-  if (!token) return false;
-
-  const [expiresAtRaw, receivedSignature] = token.split(".");
-  const expiresAt = Number(expiresAtRaw);
-
-  if (
-    !Number.isSafeInteger(expiresAt) ||
-    expiresAt <= Math.floor(Date.now() / 1000) ||
-    !receivedSignature
-  ) {
-    return false;
-  }
-
-  const expectedSignature = createHmac("sha256", getSigningSecret())
-    .update(`${paymentId}.${expiresAt}`)
-    .digest("hex");
-
-  return safeEqual(receivedSignature, expectedSignature);
-};

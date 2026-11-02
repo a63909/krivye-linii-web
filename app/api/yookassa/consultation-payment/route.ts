@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import {
-  createCheckoutToken,
   createConsultationPayment,
-  getPublicSiteUrl,
   isAuthorizedInternalRequest,
   normalizeConsultationId,
   normalizeRubles,
+  PosLinkBusyError,
 } from "../../../lib/yookassa";
 
 export const runtime = "nodejs";
@@ -49,20 +48,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const payment = await createConsultationPayment({ amount, consultationId });
-    const confirmationUrl = payment.confirmation?.confirmation_url;
-
-    if (!confirmationUrl) {
-      throw new Error("YOOKASSA_CONFIRMATION_URL_MISSING");
-    }
-
-    const expiresAt = Math.floor(Date.now() / 1000) + 60 * 60;
-    const token = createCheckoutToken(payment.id, expiresAt);
-    const checkoutUrl = new URL(
-      `/consultation/checkout/${encodeURIComponent(payment.id)}`,
-      getPublicSiteUrl(),
-    );
-    checkoutUrl.searchParams.set("token", token);
+    const { payment, expiresAt, reused } = await createConsultationPayment({
+      amount,
+      consultationId,
+    });
 
     return NextResponse.json({
       ok: true,
@@ -70,16 +59,29 @@ export async function POST(request: Request) {
       amount,
       paymentId: payment.id,
       status: payment.status,
-      checkoutUrl: checkoutUrl.toString(),
-      expiresAt: new Date(expiresAt * 1000).toISOString(),
+      paymentMode: "permanent_pos_link",
+      qrCodeChanged: false,
+      reused,
+      expiresAt,
     });
   } catch (error) {
+    if (error instanceof PosLinkBusyError) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: "По постоянному QR уже ожидается другой платёж",
+          activePaymentId: error.activePaymentId || null,
+        },
+        { status: 409 },
+      );
+    }
+
     console.error(
       "[yookassa] Failed to create consultation payment",
       error instanceof Error ? error.message : "Unknown error",
     );
     return NextResponse.json(
-      { ok: false, error: "Не удалось создать ссылку на оплату" },
+      { ok: false, error: "Не удалось записать сумму в постоянный QR" },
       { status: 502 },
     );
   }
