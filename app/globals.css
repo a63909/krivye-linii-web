@@ -1140,6 +1140,11 @@ button {
   letter-spacing: -0.05em;
 }
 
+.consultation-details .button {
+  max-width: 100%;
+  margin-top: 12px;
+}
+
 .consultation-card:hover p {
   color: rgba(9, 11, 10, 0.75);
 }

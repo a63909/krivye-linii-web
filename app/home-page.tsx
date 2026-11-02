@@ -142,6 +142,7 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
   const [clientsOpen, setClientsOpen] = useState(false);
+  const [projectType, setProjectType] = useState("Сайт компании");
   const [briefStatus, setBriefStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const briefStartedAt = useRef(0);
 
@@ -194,6 +195,7 @@ export default function Home() {
       if (!response.ok) throw new Error("Lead delivery failed");
 
       form.reset();
+      setProjectType("Сайт компании");
       briefStartedAt.current = Date.now();
       window.ym?.(110842965, "reachGoal", "lead_form_submit");
       setBriefStatus("success");
@@ -419,6 +421,9 @@ export default function Home() {
               <div className="consultation-details">
                 <strong>от 0 ₽</strong>
                 <p>Стоимость не фиксирована — согласуем индивидуально в зависимости от задачи и объёма консультации.</p>
+                <a className="button button-light" href="#brief" onClick={() => setProjectType("Консультация")}>
+                  Заказать консультацию <ArrowIcon />
+                </a>
               </div>
             </article>
           </div>
@@ -543,7 +548,7 @@ export default function Home() {
             <div className="form-row">
               <label>
                 <span>Что нужно?</span>
-                <select name="project" defaultValue="Сайт компании">
+                <select name="project" value={projectType} onChange={(event) => setProjectType(event.target.value)}>
                   <option>Лендинг</option>
                   <option>Сайт компании</option>
                   <option>Сайт-каталог</option>
