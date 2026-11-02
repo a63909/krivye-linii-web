@@ -550,6 +550,7 @@ export default function Home() {
                   <option>Логотип</option>
                   <option>Фирменный стиль</option>
                   <option>Редизайн</option>
+                  <option>Консультация</option>
                   <option>Другое</option>
                 </select>
               </label>
