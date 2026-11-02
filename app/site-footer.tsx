@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { siteOperator } from "./site-operator";
 
 const services = [
   ["Сайты и интернет-магазины", "/services/sites"],
@@ -64,13 +65,14 @@ export default function SiteFooter() {
           <a className="footer-email" href="mailto:web@curvedlines.ru">
             web@curvedlines.ru
           </a>
-          <div className="footer-legal-details">
-            <strong>ИП Гладышев Андрей Иванович</strong>
-            <span>ИНН 860219643299</span>
-            <span>ОГРНИП 3198611700068507</span>
-            <span>Юридический адрес: Москва, Пресненская набережная, д. 12</span>
-          </div>
-          <p>Москва · работаем по России</p>
+          {siteOperator && (
+            <div className="footer-legal-details">
+              <strong>{siteOperator.name}</strong>
+              {siteOperator.taxId && <span>ИНН {siteOperator.taxId}</span>}
+              {siteOperator.address && <span>Адрес: {siteOperator.address}</span>}
+            </div>
+          )}
+          {siteOperator?.serviceArea && <p>{siteOperator.serviceArea}</p>}
           <p className="footer-status"><i /> Принимаем новые проекты</p>
           <p>Фиксируем сроки, стоимость и этапы до начала работ.</p>
         </section>

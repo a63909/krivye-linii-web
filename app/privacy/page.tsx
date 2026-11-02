@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { siteOperator } from "../site-operator";
 
 export const metadata: Metadata = {
   title: "Политика конфиденциальности",
@@ -23,7 +24,7 @@ export default function PrivacyPage() {
               добровольно передаёт через сайт «Кривые Линии WEB».
             </p>
             <p>
-              Оператор сайта — «Кривые Линии WEB». Контакт для обращений:{" "}
+              Оператор сайта — {siteOperator?.name ?? "«Кривые Линии WEB»"}. Контакт для обращений:{" "}
               <a href="mailto:web@curvedlines.ru">web@curvedlines.ru</a>.
             </p>
           </div>

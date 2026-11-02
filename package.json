@@ -9,7 +9,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "operator:publish": "node scripts/set-site-operator.mjs show",
+    "operator:hide": "node scripts/set-site-operator.mjs hide"
   },
   "dependencies": {
     "next": "16.2.6",

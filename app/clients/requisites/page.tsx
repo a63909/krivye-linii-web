@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { siteOperator } from "../../site-operator";
 
 export const metadata: Metadata = {
   title: "Реквизиты — Кривые Линии WEB",
@@ -9,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function RequisitesPage() {
-  return null;
+  redirect(siteOperator ? "/documents#details" : "/documents");
 }

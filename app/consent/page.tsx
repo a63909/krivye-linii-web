@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { siteOperator } from "../site-operator";
 
 export const metadata: Metadata = {
   title: "Согласие на обработку данных",
@@ -20,7 +21,7 @@ export default function ConsentPage() {
           <div>
             <p>
               Отправляя заявку на сайте, пользователь свободно и в своём интересе даёт
-              «Кривые Линии WEB» согласие на обработку указанных им данных.
+              согласие на обработку указанных им данных. Оператор — {siteOperator?.name ?? "«Кривые Линии WEB»"}.
             </p>
           </div>
         </section>

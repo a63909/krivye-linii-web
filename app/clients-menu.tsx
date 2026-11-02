@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { siteOperator } from "./site-operator";
 
 type ClientsMenuProps = {
   id: string;
@@ -51,7 +52,7 @@ export default function ClientsMenu({
       </button>
 
       <div className="clients-submenu" id={id}>
-        {clientLinks.map((item) => (
+        {clientLinks.filter((item) => item.href !== "/documents#details" || siteOperator !== null).map((item) => (
           <Link href={item.href} key={item.href} onClick={onNavigate}>
             {item.label}
           </Link>
