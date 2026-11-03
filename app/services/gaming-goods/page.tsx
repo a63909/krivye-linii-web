@@ -39,7 +39,7 @@ export default function GamingGoodsPage() {
           </p>
           <div className={styles.actions}>
             <a href="#catalog">Посмотреть направление <span aria-hidden="true">↓</span></a>
-            <a href="mailto:hello@kl-w.ru?subject=Игровые%20товары%20—%20вопрос%20о%20запуске">Уточнить запуск <span aria-hidden="true">↗</span></a>
+            <a href="mailto:web@curvedlines.ru?subject=Игровые%20товары%20—%20вопрос%20о%20запуске">Уточнить запуск <span aria-hidden="true">↗</span></a>
           </div>
           <p className={styles.launchNote}><i aria-hidden="true" />Готовится к запуску · приём заказов пока закрыт</p>
         </div>
@@ -66,7 +66,7 @@ export default function GamingGoodsPage() {
             <div><dt>Объём и стоимость</dt><dd>Будут опубликованы при запуске</dd></div>
             <div><dt>Передача и сроки</dt><dd>Условия готовятся</dd></div>
           </dl>
-          <a className={styles.productLink} href="mailto:hello@kl-w.ru?subject=Вопрос%20о%20направлении%20PokerOK">Задать вопрос о запуске <span aria-hidden="true">↗</span></a>
+          <a className={styles.productLink} href="mailto:web@curvedlines.ru?subject=Вопрос%20о%20направлении%20PokerOK">Задать вопрос о запуске <span aria-hidden="true">↗</span></a>
         </article>
       </section>
 
@@ -86,8 +86,8 @@ export default function GamingGoodsPage() {
         <div><p className={styles.eyebrow}>ЕСТЬ ВОПРОС?</p><h2 id="contact-title">Остаёмся<br /><em>на связи.</em></h2></div>
         <div className={styles.contactCopy}>
           <p>Пишите, если хотите уточнить статус направления или задать вопрос о будущем ассортименте.</p>
-          <a className={styles.email} href="mailto:hello@kl-w.ru?subject=Игровые%20товары">hello@kl-w.ru <span aria-hidden="true">↗</span></a>
-          <div className={styles.documentLinks}><Link href="/clients/requisites">Реквизиты</Link><Link href="/documents">Документы</Link><Link href="/privacy">Конфиденциальность</Link></div>
+          <a className={styles.email} href="mailto:web@curvedlines.ru?subject=Игровые%20товары">web@curvedlines.ru <span aria-hidden="true">↗</span></a>
+          <div className={styles.documentLinks}><Link href="/terms">Заказ и получение</Link><Link href="/refunds">Возврат денег</Link><Link href="/clients/requisites">Реквизиты</Link><Link href="/privacy">Конфиденциальность</Link></div>
         </div>
       </section>
     </main>

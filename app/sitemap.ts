@@ -74,6 +74,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     ...projectPages,
     {
+      url: `${baseUrl}/terms`,
+      lastModified: new Date("2026-11-03T00:00:00Z"),
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/refunds`,
+      lastModified: new Date("2026-11-03T00:00:00Z"),
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
       url: `${baseUrl}/privacy`,
       lastModified: new Date(),
       changeFrequency: "yearly",

@@ -1730,6 +1730,8 @@ button {
 
 .footer-bottom > div {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 28px;
   text-align: right;
 }
@@ -1884,7 +1886,8 @@ button {
   }
 
   .clients-menu.is-open .clients-submenu {
-    max-height: 240px;
+    max-height: 420px;
+    overflow-y: auto;
     padding-bottom: 12px;
     pointer-events: auto;
   }
@@ -4219,3 +4222,4 @@ button {
 .header-cta:is(:hover, :focus-visible), .button:not(:disabled):is(:hover, :focus-visible) { background: #f2df72; color: #090b0a; border-color: #f2df72; }
 .menu-button:is(:hover, :focus-visible) { background: #f2df72; }
 .menu-button:is(:hover, :focus-visible) i { background: #090b0a; }
+
