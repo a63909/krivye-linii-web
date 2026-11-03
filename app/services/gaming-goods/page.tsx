@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import AboutHeader from "../../about/about-header";
+import GamingCatalog from "./catalog";
+import { catalogItems } from "./catalog-data";
 import styles from "./gaming-goods.module.css";
 
 const description =
-  "Игровые товары Кривых Линий WEB: информация о готовящемся направлении, ассортименте и условиях запуска.";
+  "Скины CS2 и предметы Dota 2 под заказ: каталог, подбор экземпляра и согласование цены и передачи до оплаты.";
 
 export const metadata: Metadata = {
   title: "Игровые товары",
@@ -19,9 +21,9 @@ export const metadata: Metadata = {
 };
 
 const details = [
-  ["01", "Точный состав", "В карточке будут указаны платформа, вид товара и объём передачи — чтобы до заказа было понятно, что вы получаете."],
-  ["02", "Стоимость до оплаты", "Цена и итоговая сумма заказа будут доступны до перехода к оплате. Сейчас цены не опубликованы и заказы не принимаются."],
-  ["03", "Понятное получение", "Способ передачи, срок исполнения и условия возврата появятся вместе с доступным ассортиментом."],
+  ["01", "Выберите предмет", "Найдите скин или предмет героя в каталоге. Укажите нужное состояние, вариант, стиль и бюджет в запросе на подбор."],
+  ["02", "Согласуем экземпляр", "Подтвердим возможность подбора, покажем точный предмет, согласуем цену в рублях и срок. Отправка запроса бесплатна."],
+  ["03", "Передадим через Steam", "Передача согласованного предмета оформляется предложением обмена. Ограничения и возможные задержки Steam проверяются до оплаты."],
 ];
 
 export default function GamingGoodsPage() {
@@ -32,45 +34,35 @@ export default function GamingGoodsPage() {
       <section className={styles.hero} aria-labelledby="gaming-title">
         <div className={styles.heroCopy}>
           <p className={styles.eyebrow}>КРИВЫЕ ЛИНИИ / ИГРОВОЕ НАПРАВЛЕНИЕ</p>
-          <h1 id="gaming-title">Игровые<br /><em>товары.</em></h1>
+          <h1 id="gaming-title">Твой стиль.<br /><em>Твоя игра.</em></h1>
           <p className={styles.lead}>
-            Новый раздел Кривых Линий WEB. Готовим направление игровых товаров
-            с понятным описанием, стоимостью и условиями передачи.
+            Скины CS2 и предметы героев Dota 2 под заказ.
+            Выбирай из каталога — конкретный экземпляр, цену и передачу согласуем до оплаты.
           </p>
           <div className={styles.actions}>
-            <a href="#catalog">Посмотреть направление <span aria-hidden="true">↓</span></a>
-            <a href="mailto:web@curvedlines.ru?subject=Игровые%20товары%20—%20вопрос%20о%20запуске">Уточнить запуск <span aria-hidden="true">↗</span></a>
+            <a href="#catalog">Открыть каталог <span aria-hidden="true">↓</span></a>
+            <a href="#how-to-order">Как получить предмет <span aria-hidden="true">↗</span></a>
           </div>
-          <p className={styles.launchNote}><i aria-hidden="true" />Готовится к запуску · приём заказов пока закрыт</p>
+          <p className={styles.launchNote}><i aria-hidden="true" />{catalogItems.length} позиций · 2 игры · подбор под заказ</p>
         </div>
 
         <div className={styles.heroVisual} aria-hidden="true">
           <div className={styles.visualTop}><span>GAMING / DIGITAL GOODS</span><span>KL — 07</span></div>
-          <div className={styles.orbit}><div className={styles.token}><span>КЛ</span><small>PLAY / DIGITAL</small></div></div>
-          <div className={styles.visualBottom}><span>НОВОЕ НАПРАВЛЕНИЕ</span><strong>Скоро<br />в игре.</strong></div>
+          <div className={styles.heroArt} />
+          <div className={styles.visualBottom}><span>CS2 / DOTA 2</span><strong>Выбери<br />свой предмет.</strong></div>
         </div>
       </section>
 
-      <section className={styles.catalog} id="catalog" aria-labelledby="catalog-title">
+      <section className={styles.catalogSection} id="catalog" aria-labelledby="catalog-title">
         <div className={styles.sectionHeading}>
           <p className={styles.eyebrow}>01 / НАПРАВЛЕНИЕ</p>
-          <h2 id="catalog-title">Что готовим<br />к запуску.</h2>
-          <p>Сейчас раздел информационный. Ассортимент и условия продаж будут опубликованы перед открытием заказов.</p>
+          <h2 id="catalog-title">Собери свой<br />инвентарь.</h2>
+          <p>От лаконичных скинов до Arcana для любимого героя. Не нашли нужный предмет? Напишите — проверим возможность подбора.</p>
         </div>
-        <article className={styles.product}>
-          <div className={styles.productTop}><span>POKEROK</span><span className={styles.badge}>Планируется</span></div>
-          <h3>Фишки и игровой баланс</h3>
-          <p>Планируемое направление — передача игрового баланса PokerOK между пользователями. Возможность запуска и условия приёма платежей уточняются.</p>
-          <dl>
-            <div><dt>Доступность</dt><dd>Заказы пока закрыты</dd></div>
-            <div><dt>Объём и стоимость</dt><dd>Будут опубликованы при запуске</dd></div>
-            <div><dt>Передача и сроки</dt><dd>Условия готовятся</dd></div>
-          </dl>
-          <a className={styles.productLink} href="mailto:web@curvedlines.ru?subject=Вопрос%20о%20направлении%20PokerOK">Задать вопрос о запуске <span aria-hidden="true">↗</span></a>
-        </article>
+        <GamingCatalog />
       </section>
 
-      <section className={styles.conditions} aria-labelledby="conditions-title">
+      <section className={styles.conditions} id="how-to-order" aria-labelledby="conditions-title">
         <div className={styles.sectionHeading}>
           <p className={styles.eyebrow}>02 / ПЕРЕД ЗАКАЗОМ</p>
           <h2 id="conditions-title">Всё о товаре.<br />До оплаты.</h2>
@@ -85,9 +77,10 @@ export default function GamingGoodsPage() {
       <section className={styles.contact} aria-labelledby="contact-title">
         <div><p className={styles.eyebrow}>ЕСТЬ ВОПРОС?</p><h2 id="contact-title">Остаёмся<br /><em>на связи.</em></h2></div>
         <div className={styles.contactCopy}>
-          <p>Пишите, если хотите уточнить статус направления или задать вопрос о будущем ассортименте.</p>
+          <p>Нужен другой скин или предмет? Укажите игру, название и желаемые параметры. Проверим возможность подбора и ответим с условиями.</p>
           <a className={styles.email} href="mailto:web@curvedlines.ru?subject=Игровые%20товары">web@curvedlines.ru <span aria-hidden="true">↗</span></a>
           <div className={styles.documentLinks}><Link href="/terms">Заказ и получение</Link><Link href="/refunds">Возврат денег</Link><Link href="/clients/requisites">Реквизиты</Link><Link href="/privacy">Конфиденциальность</Link></div>
+          <p className={styles.affiliation}>CS2, Dota 2 и Steam — обозначения их правообладателей. Кривые Линии WEB не являются представителем Valve.</p>
         </div>
       </section>
     </main>
