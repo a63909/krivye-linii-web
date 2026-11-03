@@ -14,6 +14,7 @@ const serviceLinks = [
   { label: "UX/UI и редизайн", href: "/services/ux-ui-redesign" },
   { label: "Интеграции и автоматизация", href: "/services/integrations-automation" },
   { label: "Брендинг и поддержка", href: "/services/branding-support" },
+  { label: "Игровые товары", href: "/services/gaming-goods" },
 ];
 
 export default function ServicesMenu({
@@ -45,3 +46,4 @@ export default function ServicesMenu({
     </div>
   );
 }
+

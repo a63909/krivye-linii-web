@@ -61,6 +61,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     {
+      url: `${baseUrl}/services/gaming-goods`,
+      lastModified: new Date("2026-11-03T00:00:00Z"),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
       url: `${baseUrl}/documents`,
       lastModified: new Date(),
       changeFrequency: "yearly",
@@ -81,3 +87,4 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
   ];
 }
+
