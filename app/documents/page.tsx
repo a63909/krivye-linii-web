@@ -195,16 +195,26 @@ export default function DocumentsPage() {
         <section className="documents-legal">
           <div className="documents-section-heading documents-section-heading-light">
             <p>{siteOperator ? "05" : "04"} / ЮРИДИЧЕСКИЕ ДОКУМЕНТЫ</p>
-            <h2>Правила обработки данных.</h2>
+            <h2>Заказ, возврат и обработка данных.</h2>
           </div>
           <div className="documents-legal-links">
-            <Link href="/privacy">
+            <Link href="/terms">
               <span>01</span>
+              Условия заказа, оплаты и получения
+              <i aria-hidden="true">↗</i>
+            </Link>
+            <Link href="/refunds">
+              <span>02</span>
+              Условия отмены заказа и возврата денег
+              <i aria-hidden="true">↗</i>
+            </Link>
+            <Link href="/privacy">
+              <span>03</span>
               Политика конфиденциальности
               <i aria-hidden="true">↗</i>
             </Link>
             <Link href="/consent">
-              <span>02</span>
+              <span>04</span>
               Согласие на обработку персональных данных
               <i aria-hidden="true">↗</i>
             </Link>
@@ -222,3 +232,4 @@ export default function DocumentsPage() {
     </div>
   );
 }
+

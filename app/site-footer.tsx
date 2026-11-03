@@ -8,6 +8,7 @@ const services = [
   ["UX/UI и редизайн", "/services/ux-ui-redesign"],
   ["Интеграции и автоматизация", "/services/integrations-automation"],
   ["Брендинг и поддержка", "/services/branding-support"],
+  ["Игровые товары", "/services/gaming-goods"],
 ];
 
 const navigation = [
@@ -81,6 +82,8 @@ export default function SiteFooter() {
       <div className="footer-bottom">
         <p>© 2026 «Кривые Линии WEB». Все права защищены.</p>
         <div>
+          <Link href="/terms">Заказ, оплата и получение</Link>
+          <Link href="/refunds">Условия возврата</Link>
           <Link href="/privacy">Политика конфиденциальности</Link>
           <Link href="/consent">Согласие на обработку данных</Link>
         </div>
@@ -88,3 +91,4 @@ export default function SiteFooter() {
     </footer>
   );
 }
+
