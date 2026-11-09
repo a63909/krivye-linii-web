@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import AboutHeader from "../../about/about-header";
+import { breadcrumbJsonLd, JsonLd, serviceJsonLd } from "../../seo";
 import styles from "./integrations-automation.module.css";
 
 export const metadata: Metadata = {
@@ -75,6 +76,15 @@ function Label({ children }: { children: React.ReactNode }) {
 export default function IntegrationsAutomationPage() {
   return (
     <main className={styles.page}>
+      <JsonLd data={[
+        breadcrumbJsonLd([{ name: "Главная", path: "/" }, { name: "Интеграции и автоматизация", path: "/services/integrations-automation" }]),
+        serviceJsonLd({
+          name: "Интеграции и автоматизация",
+          description: "Интеграция CRM, ERP, сайтов, платежей, документов и уведомлений, автоматизация повторяющихся операций и обмена данными.",
+          path: "/services/integrations-automation",
+          serviceType: "Интеграция и автоматизация бизнес-процессов",
+        }),
+      ]} />
       <AboutHeader active={null} />
 
       <section className={styles.hero}>

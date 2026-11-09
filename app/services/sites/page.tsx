@@ -3,6 +3,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import AboutHeader from "../../about/about-header";
+import { breadcrumbJsonLd, JsonLd, serviceJsonLd } from "../../seo";
 import { projects } from "../../work/projects";
 import styles from "./sites.module.css";
 
@@ -96,6 +97,15 @@ const faq = [
 export default function SitesServicePage() {
   return (
     <main className={styles.page}>
+      <JsonLd data={[
+        breadcrumbJsonLd([{ name: "Главная", path: "/" }, { name: "Создание сайтов", path: "/services/sites" }]),
+        serviceJsonLd({
+          name: "Создание сайтов и интернет-магазинов",
+          description: "Создание сайтов под ключ: лендинги, корпоративные сайты и интернет-магазины — от структуры и UX/UI-дизайна до запуска, аналитики и поддержки.",
+          path: "/services/sites",
+          serviceType: "Создание сайтов",
+        }),
+      ]} />
       <AboutHeader active={null} />
 
       <section className={styles.hero}>

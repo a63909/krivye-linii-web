@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import AboutHeader from "../../about/about-header";
+import { breadcrumbJsonLd, JsonLd, serviceJsonLd } from "../../seo";
 import styles from "./ux-ui-redesign.module.css";
 
 export const metadata: Metadata = {
@@ -71,6 +72,15 @@ function Label({ children }: { children: React.ReactNode }) {
 export default function UxUiRedesignPage() {
   return (
     <main className={styles.page}>
+      <JsonLd data={[
+        breadcrumbJsonLd([{ name: "Главная", path: "/" }, { name: "UX/UI-дизайн и редизайн", path: "/services/ux-ui-redesign" }]),
+        serviceJsonLd({
+          name: "UX/UI-дизайн и редизайн",
+          description: "UX-аудит, проектирование пользовательских сценариев, интерфейсов и дизайн-систем для новых и существующих цифровых продуктов.",
+          path: "/services/ux-ui-redesign",
+          serviceType: "UX/UI-дизайн",
+        }),
+      ]} />
       <AboutHeader active={null} />
 
       <section className={styles.hero}>
