@@ -7,7 +7,7 @@ import { breadcrumbJsonLd, JsonLd } from "../seo";
 
 export const metadata: Metadata = {
   title: "Портфолио — разработанные сайты и интернет-магазины",
-  description: "Готовые сайты студии Кривые Линии WEB: LUMERA, MARGÓ MAISON, АлкоТрезв, Патриот и другие проекты. Реальные экраны, состав работ и ссылки на сайты.",
+  description: "Портфолио Кривые Линии WEB: Альфа-Климат, AUREON, LUMERA, MARGÓ MAISON, АлкоТрезв и другие сайты. Реальные экраны, состав работ и ссылки на проекты.",
   alternates: { canonical: "/portfolio" },
   openGraph: { title: "Портфолио — Кривые Линии WEB", url: "/portfolio", images: [{ url: "/images/real-projects/lumera.webp" }] },
 };

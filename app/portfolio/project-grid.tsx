@@ -23,7 +23,7 @@ export function ProjectCard({ project, index }: { project: PortfolioProject; ind
 
 export default function ProjectGrid() {
   const [category, setCategory] = useState("Все проекты");
-  const categories = ["Все проекты", "Интернет-магазины", "Сайты компаний", "Лендинги", "Веб-сервисы"];
+  const categories = ["Все проекты", "Интернет-магазины", "Сайты компаний", "Лендинги", "Веб-сервисы", "Демо-проекты"];
   const selected = portfolioProjects.filter(p => category === "Все проекты" || p.category === category);
   return <>
     <div className="portfolio-filters" aria-label="Фильтр проектов">{categories.map(item => <button type="button" key={item} aria-pressed={category === item} onClick={() => setCategory(item)}>{item}<span>{item === "Все проекты" ? portfolioProjects.length : portfolioProjects.filter(p => p.category === item).length}</span></button>)}</div>
