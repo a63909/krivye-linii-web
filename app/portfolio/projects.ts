@@ -51,7 +51,7 @@ export const portfolioProjects = [
   },
   {
     slug: "patriot", name: "ПАТРИОТ", category: "Лендинги", type: "Сайт охранного предприятия",
-    url: "https://patriot-surgut-klweb.a639091.chatgpt.site/", domain: "patriot-surgut-klweb.a639091.chatgpt.site",
+    url: "https://patriot-surgut.ru/", domain: "patriot-surgut.ru",
     image: "/images/real-projects/patriot.webp", color: "#b8b9a9",
     description: "Частная охрана в Сургуте. Сдержанный сайт о безопасности людей, объектов и бизнеса.",
     task: "Представить направления охраны и помочь потенциальному клиенту выбрать подходящее решение.",
