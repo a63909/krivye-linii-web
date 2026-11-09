@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Real, inspectable work: screenshots and case studies. */
+/* Portfolio uses the studio's Cormorant headings and Manrope interface. */
 .portfolio-shell { background: var(--paper); font-family: var(--font-manrope), Arial, sans-serif; }
 .real-portfolio-page,.real-case-page { padding-top: var(--header-height); }
 .real-portfolio-hero,.portfolio-projects-section,.portfolio-bottom-cta,.real-case-heading,.real-case-story,.real-case-next { padding: 70px max(24px, calc((100vw - 1400px) / 2)); }
