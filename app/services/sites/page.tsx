@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import AboutHeader from "../../about/about-header";
 import { breadcrumbJsonLd, JsonLd, serviceJsonLd } from "../../seo";
-import { projects } from "../../work/projects";
+import { portfolioProjects as projects } from "../../portfolio/projects";
 import styles from "./sites.module.css";
 
 export const metadata: Metadata = {
@@ -125,7 +125,7 @@ export default function SitesServicePage() {
             <Link className={styles.primaryButton} href="/#brief">
               Обсудить проект <span aria-hidden="true">↗</span>
             </Link>
-            <Link className={styles.textLink} href="/#portfolio">
+            <Link className={styles.textLink} href="/portfolio">
               Смотреть работы <span aria-hidden="true">↓</span>
             </Link>
           </div>
@@ -243,11 +243,11 @@ export default function SitesServicePage() {
             <p className={styles.sectionNumber}>04 / ВЫБРАННЫЕ РАБОТЫ</p>
             <h2>Система важнее отдельного красивого экрана.</h2>
           </div>
-          <Link href="/#portfolio">Все работы <span aria-hidden="true">↗</span></Link>
+          <Link href="/portfolio">Все работы <span aria-hidden="true">↗</span></Link>
         </div>
         <div className={styles.caseGrid}>
           {projects.map((project, index) => (
-            <Link className={styles.caseCard} href={`/work/${project.slug}`} key={project.slug}>
+            <Link className={styles.caseCard} href={`/portfolio/${project.slug}`} key={project.slug}>
               <div className={styles.caseImage}>
                 <img src={project.image} alt={`${project.name} — дизайн-проект`} />
                 <span>{String(index + 1).padStart(2, "0")}</span>

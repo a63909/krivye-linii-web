@@ -12,7 +12,7 @@ function ArrowIcon() {
 }
 
 type AboutHeaderProps = {
-  active?: "about" | "clients" | null;
+  active?: "about" | "clients" | "portfolio" | null;
 };
 
 export default function AboutHeader({ active = "about" }: AboutHeaderProps) {
@@ -67,7 +67,7 @@ export default function AboutHeader({ active = "about" }: AboutHeaderProps) {
         id="about-navigation"
         aria-label="Главное меню"
       >
-        <Link href="/#portfolio" onClick={closeMenu}>Работы</Link>
+        <Link href="/portfolio" aria-current={active === "portfolio" ? "page" : undefined} onClick={closeMenu}>Портфолио</Link>
         <ServicesMenu
           id="about-services-navigation"
           open={servicesOpen}

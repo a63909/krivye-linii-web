@@ -8,7 +8,8 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ClientsMenu from "./clients-menu";
 import ServicesMenu from "./services-menu";
-import { projects } from "./work/projects";
+import { portfolioProjects as projects } from "./portfolio/projects";
+import { ProjectCard } from "./portfolio/project-grid";
 
 const services = [
   {
@@ -231,7 +232,7 @@ export default function Home() {
           id="main-navigation"
           aria-label="Главное меню"
         >
-          <a href="#portfolio" onClick={closeMenu}>Работы</a>
+          <Link href="/portfolio" onClick={closeMenu}>Портфолио</Link>
           <ServicesMenu
             id="home-services-navigation"
             open={servicesOpen}
@@ -323,7 +324,7 @@ export default function Home() {
         <section className="showreel" aria-label="Избранные проекты">
           <div className="showreel-heading">
             <span>SELECTED WORK</span>
-            <span>SCROLLING / 01—04</span>
+            <span>САЙТЫ / 01—06</span>
           </div>
           <div className="project-rail">
             <div className="project-track">
@@ -342,7 +343,7 @@ export default function Home() {
                   />
                   <div className="rail-card-shade" />
                   <div className="rail-card-copy">
-                    <span>{project.category}</span>
+                    <span>{project.type}</span>
                     <h2>{project.name}</h2>
                   </div>
                 </article>
@@ -356,40 +357,14 @@ export default function Home() {
             <p className="section-index">01 / ПОРТФОЛИО</p>
             <div>
               <h2>Работы говорят раньше нас.</h2>
-              <p>Сайты и визуальные системы для разных рынков — от продукта до запуска.</p>
+              <p>Готовые сайты, реальные экраны и конкретные задачи. Каждый проект можно открыть и посмотреть в работе.</p>
             </div>
           </div>
 
-          <div className="portfolio-grid">
-            {projects.map((project, index) => (
-              <article className={`project-card project-card-${index + 1}`} key={project.slug}>
-                <Link
-                  className="project-card-link"
-                  href={`/work/${project.slug}`}
-                  aria-label={`Открыть кейс ${project.name}`}
-                >
-                  <div className="project-image-wrap">
-                    <img
-                      src={project.image}
-                      alt={`${project.name} — дизайн-проект`}
-                      width={1536}
-                      height={1024}
-                      loading="lazy"
-                    />
-                    <span className="project-number">0{index + 1}</span>
-                    <span className="project-open" aria-hidden="true">КЕЙС ↗</span>
-                  </div>
-                  <div className="project-meta">
-                    <div>
-                      <p>{project.category}</p>
-                      <h3>{project.name}</h3>
-                    </div>
-                    <p>{project.description}</p>
-                  </div>
-                </Link>
-              </article>
-            ))}
+          <div className="real-project-grid">
+            {projects.map((project, index) => <ProjectCard key={project.slug} project={project} index={index} />)}
           </div>
+          <Link className="portfolio-all-link" href="/portfolio">Всё портфолио <span>Сайты, задачи и решения ↗</span></Link>
         </section>
 
         <section className="services section" id="services">

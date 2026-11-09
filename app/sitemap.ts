@@ -1,16 +1,11 @@
 import type { MetadataRoute } from "next";
-import { projects } from "./work/projects";
+import { portfolioProjects } from "./portfolio/projects";
 
 const baseUrl = "https://web.curvedlines.ru";
 const lastModified = new Date("2026-09-28T00:00:00.000Z");
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const projectPages = projects.map((project) => ({
-    url: `${baseUrl}/work/${project.slug}`,
-    lastModified,
-    changeFrequency: "monthly" as const,
-    priority: 0.75,
-  }));
+
 
   return [
     {
@@ -67,7 +62,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "yearly",
       priority: 0.55,
     },
-    ...projectPages,
+    { url: `${baseUrl}/portfolio`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.9 },
+    ...portfolioProjects.map(project => ({ url: `${baseUrl}/portfolio/${project.slug}`, lastModified: new Date(), changeFrequency: "monthly" as const, priority: 0.8 })),
     {
       url: `${baseUrl}/privacy`,
       lastModified,

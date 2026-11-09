@@ -22,8 +22,9 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
   if (!project) return {};
 
   return {
-    title: `${project.name} — кейс`,
+    title: `${project.name} — визуальная концепция`,
     description: project.description,
+    robots: { index: false, follow: true },
     alternates: { canonical: `/work/${project.slug}` },
     openGraph: {
       type: "article",
@@ -65,12 +66,12 @@ export default async function ProjectPage({ params }: ProjectPageProps) {
       <main className="case-page">
         <section className="case-hero">
           <div className="case-hero-copy">
-            <Link className="case-back" href="/#portfolio">← Все работы</Link>
+            <Link className="case-back" href="/portfolio">← Готовые сайты</Link>
             <p className="case-kicker">
-              КЕЙС {String(projectIndex + 1).padStart(2, "0")} / {project.shortCategory}
+              ВИЗУАЛЬНАЯ КОНЦЕПЦИЯ {String(projectIndex + 1).padStart(2, "0")} / {project.shortCategory}
             </p>
             <h1>{project.name}</h1>
-            <p className="case-lead">{project.description}</p>
+            <p className="case-lead">{project.description}</p><p>Исследование визуального направления. Это концепция, а не запущенный сайт клиента.</p>
             <dl className="case-facts">
               <div><dt>Направление</dt><dd>{project.category}</dd></div>
               <div><dt>Формат</dt><dd>Концепция и digital-система</dd></div>

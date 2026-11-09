@@ -11,7 +11,7 @@ const services = [
 ];
 
 const navigation = [
-  ["Работы", "/#portfolio"],
+  ["Портфолио", "/portfolio"],
   ["Услуги", "/#services"],
   ["Цены", "/#prices"],
   ["Контакты", "/#brief"],
