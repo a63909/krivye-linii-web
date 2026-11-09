@@ -1,15 +1,14 @@
 @import "tailwindcss";
 
 /* Real, inspectable work: screenshots and case studies. */
-.portfolio-shell { background: var(--paper); }
+.portfolio-shell { background: var(--paper); font-family: var(--font-manrope), Arial, sans-serif; }
 .real-portfolio-page,.real-case-page { padding-top: var(--header-height); }
 .real-portfolio-hero,.portfolio-projects-section,.portfolio-bottom-cta,.real-case-heading,.real-case-story,.real-case-next { padding: 70px max(24px, calc((100vw - 1400px) / 2)); }
 .portfolio-eyebrow { display:flex; justify-content:space-between; gap:24px; font:11px var(--font-geist-mono),monospace; letter-spacing:.1em; text-transform:uppercase; }
 .real-portfolio-hero { padding-top:80px; padding-bottom:50px; }
 .portfolio-title-row { display:flex; justify-content:space-between; gap:40px; align-items:flex-end; margin:55px 0 35px; }
-.portfolio-title-row h1,.real-case-heading h1 { margin:0; font-size:clamp(48px,6.6vw,98px); font-weight:500; line-height:1.02; letter-spacing:-.065em; }
-.portfolio-title-row em,.portfolio-bottom-cta em { font-family:var(--font-cormorant),Georgia,serif; font-weight:400; }
-.portfolio-count { display:block; font:84px/1 var(--font-geist-mono),monospace; letter-spacing:-.09em; }
+.portfolio-title-row h1,.real-case-heading h1 { margin:0; font-family:var(--font-cormorant),Georgia,serif; font-size:clamp(48px,6.6vw,98px); font-weight:500; font-style:normal; line-height:1.02; letter-spacing:-.025em; }
+.portfolio-count { display:block; font:500 76px/1 var(--font-manrope),Arial,sans-serif; letter-spacing:-.06em; }
 .portfolio-title-row > div p { font-size:13px; line-height:1.6; }
 .portfolio-lead { max-width:670px; margin:30px 0; color:#54564f; font-size:clamp(17px,1.6vw,22px); line-height:1.65; }
 .portfolio-projects-section { padding-top:0; }
@@ -38,7 +37,8 @@
 .real-project-links a:hover { text-decoration:underline; text-underline-offset:4px; }
 .portfolio-bottom-cta { padding-top:90px; padding-bottom:95px; background:var(--yellow); }
 .portfolio-bottom-cta > p { font:11px var(--font-geist-mono),monospace; }
-.portfolio-bottom-cta h2 { font-weight:500; letter-spacing:-.06em; font-size:clamp(44px,6vw,86px); line-height:1.05; margin:28px 0 35px; }
+.portfolio-bottom-cta h2 { font-family:var(--font-cormorant),Georgia,serif; font-weight:500; font-style:normal; letter-spacing:-.025em; font-size:clamp(44px,6vw,86px); line-height:1.05; margin:28px 0 35px; }
+.portfolio-bottom-cta .button,.real-case-heading .button { width:fit-content; max-width:100%; font-family:var(--font-manrope),Arial,sans-serif; }
 .portfolio-all-link { display:flex; justify-content:space-between; gap:20px; margin-top:35px; padding:24px 0; border-top:1px solid var(--line-light); font-size:20px; }
 .portfolio-all-link span { font-size:13px; }
 .real-case-heading { padding-top:65px; }
