@@ -419,11 +419,15 @@ export default function Home() {
                 <p>Разберём вопросы по сайту, дизайну или развитию проекта и поможем определить следующие шаги.</p>
               </div>
               <div className="consultation-details">
-                <strong>от 0 ₽</strong>
+                <strong>от 500 ₽</strong>
                 <p>Стоимость не фиксирована — согласуем индивидуально в зависимости от задачи и объёма консультации.</p>
                 <a className="button button-light" href="#brief" onClick={() => setProjectType("Консультация")}>
                   Заказать консультацию <ArrowIcon />
                 </a>
+                <form action="/api/yookassa/consultation" method="post">
+                  <button className="button button-light" type="submit">Оплатить 500 ₽ через СБП <ArrowIcon /></button>
+                </form>
+                <p>Оплачивайте после согласования темы и времени. Для другой стоимости отправим персональную ссылку.</p>
               </div>
             </article>
           </div>

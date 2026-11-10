@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 export type Invoice = { orderId: string; amount: string; description: string; expiresAt: number };
 export type Payment = {
@@ -61,12 +61,23 @@ export function signInvoice(input: unknown, now = Date.now()) {
   return { invoice, token: `${payload}.${mac(`invoice:${payload}`)}` };
 }
 
+export function consultationInvoice(existingToken = "") {
+  if (existingToken) {
+    try {
+      const invoice = verifyInvoice(existingToken);
+      if (invoice.orderId.startsWith("consult-") && invoice.amount === "500.00" && invoice.description === "Онлайн-консультация") return { token: existingToken, invoice };
+    } catch { /* Expired or invalid cookies cannot determine the price. */ }
+  }
+  return signInvoice({ orderId: `consult-${randomUUID()}`, amount: "500.00", description: "Онлайн-консультация" });
+}
+
 export function verifyInvoice(token: string, now = Date.now()): Invoice {
   if (token.length > 1500) throw new PaymentError("Неверная ссылка", 404);
   const [payload, signature, extra] = token.split(".");
   if (!payload || !signature || extra || !constantEqual(signature, mac(`invoice:${payload}`))) throw new PaymentError("Неверная ссылка", 404);
   let invoice: Invoice;
   try { invoice = JSON.parse(Buffer.from(payload, "base64url").toString()); } catch { throw new PaymentError("Неверная ссылка", 404); }
+  if (!invoice || typeof invoice !== "object" || Array.isArray(invoice)) throw new PaymentError("Неверная ссылка", 404);
   if (!Number.isFinite(invoice.expiresAt) || invoice.expiresAt <= now || invoice.expiresAt > now + 30 * 60_000) throw new PaymentError("Срок ссылки истёк. Запросите новую ссылку", 410);
   if (!/^[a-zA-Z0-9_-]{1,64}$/.test(invoice.orderId) || typeof invoice.description !== "string" || normalizeAmount(invoice.amount) !== invoice.amount) throw new PaymentError("Неверная ссылка", 404);
   return invoice;

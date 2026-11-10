@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createPayment, normalizeAmount, signInvoice, verifyInvoice, requireInternalAuth, signPaymentId, verifyPaymentId, receiptCookie, verifiedPayment } from "../app/lib/yookassa.ts";
+import { consultationInvoice, createPayment, normalizeAmount, signInvoice, verifyInvoice, requireInternalAuth, signPaymentId, verifyPaymentId, receiptCookie, verifiedPayment } from "../app/lib/yookassa.ts";
 
 process.env.PAYMENT_SIGNING_SECRET = "test-only-signing-secret-do-not-use-in-production";
 process.env.PAYMENT_ADMIN_TOKEN = "test-only-admin-token";
@@ -13,6 +13,15 @@ const payment = { id, status: "pending", paid: false, test: false, recipient: { 
 test("amounts are exact and invalid or below-minimum values are rejected", () => {
   assert.equal(normalizeAmount("920,01"), "920.01");
   for (const value of [920, "499.99", "-1", "700000.01", "1e4", "920.001", "NaN"]) assert.throws(() => normalizeAmount(value));
+});
+test("public consultation fixes the server price and reuses the same unexpired invoice", () => {
+  const first = consultationInvoice();
+  assert.equal(first.invoice.amount, "500.00");
+  assert.deepEqual(consultationInvoice(first.token), first);
+  const differentService = signInvoice({ orderId: "consult-other", amount: "920", description: "Другая услуга" });
+  assert.equal(consultationInvoice(differentService.token).invoice.amount, "500.00");
+  const malformed = Buffer.from('{"amount":"1"}').toString("base64url") + ".invalid";
+  assert.equal(consultationInvoice(malformed).invoice.amount, "500.00");
 });
 test("only the administrator can issue payment links", () => {
   assert.throws(() => requireInternalAuth(new Request("https://example.com")), /Нет доступа/);
