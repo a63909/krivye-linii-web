@@ -20,6 +20,8 @@ jobs:
         run: npm ci
       - name: Lint
         run: npm run lint
+      - name: Verify payment invariants
+        run: node --test tests/yookassa.test.mjs
       - name: Build standalone
         run: npm run build
       - name: Verify standalone artifact
