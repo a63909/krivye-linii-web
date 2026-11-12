@@ -102,9 +102,14 @@ async function loadSession(token: string): Promise<Session> {
   return { token, userId, expiresAt: Math.min(expiresAt - 60_000, Date.now() + 4 * 60_000) };
 }
 
-async function session(): Promise<Session> {
+export function requireP2pSession() {
   const configuredToken = process.env.P2POBMEN_AUTH_TOKEN?.trim();
   if (!configuredToken) throw new P2pError("Требуется первичный вход p2pobmen с кодом из почты: настройте P2POBMEN_AUTH_TOKEN", 503);
+  return configuredToken;
+}
+
+async function session(): Promise<Session> {
+  const configuredToken = requireP2pSession();
   const key = createHash("sha256").update(configuredToken).digest("hex");
   let token = configuredToken;
   if (cachedSession?.key === key) {

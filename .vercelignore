@@ -1,0 +1,3 @@
+.p2pobmen-auth/
+.env*
+!.env.example
