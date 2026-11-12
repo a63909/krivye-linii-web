@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/p2pobmen/process-deals",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

@@ -40,6 +40,11 @@ export function siteOrigin() {
   return url.origin;
 }
 
+export function requirePaymentConfiguration() {
+  for (const name of ["YOOKASSA_SHOP_ID", "YOOKASSA_SECRET_KEY", "PAYMENT_ADMIN_TOKEN", "PAYMENT_SIGNING_SECRET", "PAYMENT_SITE_URL"]) env(name);
+  siteOrigin();
+}
+
 export function normalizeAmount(value: unknown) {
   if (typeof value !== "string" || !/^\d{1,6}(?:[.,]\d{1,2})?$/.test(value.trim())) throw new PaymentError("Некорректная сумма");
   const [rubles, cents = ""] = value.trim().replace(",", ".").split(".");
@@ -125,10 +130,13 @@ export async function createPayment(invoice: Invoice) {
   return payment;
 }
 
-export async function verifiedPayment(id: string) {
+export async function verifiedPayment(id: string, source: "curvedlines-web" | "p2pobmen" | "webhook" = "curvedlines-web") {
   if (!/^[a-f0-9-]{36}$/.test(id)) throw new PaymentError("Неверный платёж", 400);
   const payment = await providerRequest(`payments/${id}`);
-  if (payment.id !== id || payment.metadata?.source !== "curvedlines-web" || payment.amount.currency !== "RUB" || payment.metadata.expected_amount !== payment.amount.value) throw new PaymentError("Данные платежа не совпали с заказом", 400);
+  const actualSource = payment.metadata?.source;
+  const validSource = source === "webhook" ? ["curvedlines-web", "p2pobmen"].includes(actualSource || "") : actualSource === source;
+  if (payment.id !== id || !validSource || payment.amount.currency !== "RUB" || payment.metadata?.expected_amount !== payment.amount.value) throw new PaymentError("Данные платежа не совпали с заказом", 400);
+  if (actualSource === "p2pobmen" && (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(payment.metadata?.deal_id || "") || !payment.metadata?.chat_id || payment.metadata.order_id !== `p2p-${payment.metadata.deal_id}`)) throw new PaymentError("Нет данных сделки p2pobmen", 400);
   return payment;
 }
 

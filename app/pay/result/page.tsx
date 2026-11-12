@@ -4,8 +4,16 @@ import { paymentError, receiptCookie, verifiedPayment, verifyPaymentId, type Pay
 import styles from "../payment.module.css";
 
 export const dynamic = "force-dynamic";
-export default async function Result({ searchParams }: { searchParams: Promise<{ order?: string }> }) {
-  const { order } = await searchParams;
+export default async function Result({ searchParams }: { searchParams: Promise<{ order?: string; source?: string }> }) {
+  const { order, source } = await searchParams;
+  // Direct provider links from the deal chat do not establish checkout cookies.
+  // Show instructions only; neither query parameters nor the return itself prove payment.
+  if (source === "p2pobmen") return <>
+    <h1>Вернитесь в чат сделки p2pobmen</h1>
+    <p>После подтверждения оплаты ЮKassa статус сделки обновится автоматически. Если статус не изменился, свяжитесь с продавцом в чате сделки.</p>
+    <p>Сам по себе возврат на сайт не подтверждает успешную оплату.</p>
+    <a className={styles.button} href="https://p2pobmen.com/">Открыть p2pobmen</a>
+  </>;
   let payment: Payment | undefined;
   let message = "";
   try {
