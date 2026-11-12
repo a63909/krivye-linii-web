@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/p2pobmen/process-deals",
-      "schedule": "*/1 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
