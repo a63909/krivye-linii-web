@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
+    "p2pobmen:login": "node scripts/p2pobmen-login.mjs",
     "operator:publish": "node scripts/set-site-operator.mjs show",
     "operator:hide": "node scripts/set-site-operator.mjs hide"
   },
