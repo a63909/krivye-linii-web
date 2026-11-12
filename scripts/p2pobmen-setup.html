@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Настройка p2pobmen</title>
+<style>
+:root{color-scheme:light;font-family:system-ui,sans-serif;color:#202124;background:#f5f5f2}*{box-sizing:border-box}body{margin:0;padding:40px 20px}main{max-width:720px;margin:auto}h1{font-size:30px;margin:0 0 10px}p{line-height:1.5;color:#54565b}.card{background:white;border:1px solid #deded8;border-radius:16px;padding:24px;margin:20px 0}h2{font-size:19px;margin:0 0 16px}label{display:block;font-weight:600;margin:16px 0 6px}input{display:block;width:100%;border:1px solid #b9bab4;border-radius:8px;padding:12px;font:inherit}button{background:#25392d;color:white;border:0;border-radius:8px;padding:12px 16px;font:inherit;font-weight:600;margin:18px 10px 0 0;cursor:pointer}button.secondary{background:#e9eee8;color:#25392d}button:disabled{opacity:.5;cursor:wait}a{color:#315f43}.status{padding:16px;border-radius:10px;background:#e7ece4;white-space:pre-wrap;line-height:1.5}.status.error{background:#fbe7e4;color:#842c23}[hidden]{display:none!important}small{display:block;color:#666;margin-top:8px;line-height:1.4}
+</style><script src="/setup.js" defer></script></head><body><main>
+<h1>Подключение p2pobmen</h1><p>Войдите с кодом из почты и подключите бесплатный запуск каждую минуту через cron-job.org.</p>
+<div id="status" class="status" role="status" aria-live="polite">Откройте ссылку, которую напечатал помощник настройки.</div>
+<section class="card"><h2>1. Вход в p2pobmen</h2><form id="login-form">
+<label for="username">Логин или email</label><input id="username" name="username" autocomplete="username" required>
+<label for="password">Пароль</label><input id="password" name="password" type="password" autocomplete="current-password" required>
+<button type="submit">Войти</button></form>
+<form id="code-form" hidden><label for="code">Код из письма p2pobmen</label><input id="code" name="code" type="password" inputmode="numeric" autocomplete="one-time-code" required><button type="submit">Подтвердить код</button></form>
+<small>Пароль и код не попадут в чат. Код используется только для этой попытки входа.</small></section>
+<section class="card"><h2>2. Переменные Vercel</h2><p>Полученная сессия и отдельный токен планировщика будут записаны в production проекта krivye-linii-web.</p>
+<button id="install" type="button">Записать переменные в Vercel</button><small>Для этого компьютера нужен вход через <code>npx vercel@65.15.0 login</code>. После записи выполните redeploy проекта.</small></section>
+<section class="card"><h2>3. Внешний планировщик</h2><form id="cron-form">
+<label for="cron-key">API-ключ cron-job.org</label><input id="cron-key" type="password" autocomplete="off">
+<small>Ключ создаётся в настройках <a href="https://console.cron-job.org/" target="_blank" rel="noreferrer">аккаунта cron-job.org</a>. Планировщик получит только отдельный токен запуска.</small>
+<button type="submit" class="secondary">Подготовить задание</button><button id="enable" type="button">Проверить сайт и включить</button></form>
+<p id="job-link"></p><small>Перед включением проверяется готовность сайта без принятия сделок. После включения новые сделки будут обрабатываться автоматически.</small></section>
+<p><small>Эта форма работает только на вашем компьютере. Секреты сохраняются в закрытом каталоге .p2pobmen-auth, исключённом из Git.</small></p>
+</main></body></html>

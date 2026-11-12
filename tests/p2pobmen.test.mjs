@@ -4,7 +4,7 @@ import { registerHooks } from "node:module";
 
 // Run the actual Next route handlers with Node's TypeScript support.
 registerHooks({ resolve(specifier, context, nextResolve) {
-  if (specifier === "next/server") return nextResolve("next/server.js", context);
+  if (specifier === "next/server") return nextResolve(new URL("./next-server.mjs", import.meta.url).href, context);
   try { return nextResolve(specifier, context); } catch (error) {
     if (error.code === "ERR_MODULE_NOT_FOUND" && specifier.startsWith(".") && !/\.[a-z]+$/.test(specifier)) return nextResolve(`${specifier}.ts`, context);
     throw error;
@@ -12,6 +12,8 @@ registerHooks({ resolve(specifier, context, nextResolve) {
 } });
 const { POST: processDeals, GET: cronDeals } = await import("../app/api/p2pobmen/process-deals/route.ts");
 const { POST: webhook } = await import("../app/api/yookassa/webhook/route.ts");
+const { GET: readiness } = await import("../app/api/p2pobmen/status/route.ts");
+const { deferred } = await import("./next-server.mjs");
 const { dealAmount, createPaymentForDeal } = await import("../app/lib/p2pobmen-payments.ts");
 const { verifiedPayment } = await import("../app/lib/yookassa.ts");
 const { beginLogin, completeLogin } = await import("../app/lib/p2pobmen.ts");
@@ -34,6 +36,8 @@ beforeEach(() => {
   process.env.P2POBMEN_AUTH_TOKEN = jwt(sequence);
   process.env.PAYMENT_ADMIN_TOKEN = "test-admin";
   process.env.CRON_SECRET = "test-cron";
+  process.env.P2POBMEN_PROCESS_TOKEN = "test-process-only";
+  deferred.length = 0;
   process.env.PAYMENT_SIGNING_SECRET = "test-signing";
   process.env.YOOKASSA_SHOP_ID = "1515932";
   process.env.YOOKASSA_SECRET_KEY = "test-provider-key";
@@ -64,7 +68,7 @@ beforeEach(() => {
       case "AuthGetUser": return Response.json({ data: { auth: { currentUser: { guid: userId } } } });
       case "DealsSallerListLoad": {
         assert.deepEqual(body.variables.filter, { state: ["NEW"], userIdSeller: userId, isDeleted: false });
-        assert.equal(body.variables.first, 15);
+        assert.equal(body.variables.first, scenario.expectedFirst || 15);
         return Response.json({ data: { exchange: { deal: { getDeals: { edges: (scenario.deals || [scenario.deal]).map(node => ({ node })) } } } } });
       }
       case "SellerDealAccept": {
@@ -129,6 +133,40 @@ test("NEW seller deal is accepted, billed for exact RUB amount, and receives its
   assert.match(chat.body.variables.input.message, /https:\/\/yoomoney\.ru\/checkout\/test/);
   assert.ok(calls.indexOf(mutations("SellerDealAccept")[0]) < calls.indexOf(provider));
   assert.ok(calls.indexOf(provider) < calls.indexOf(chat));
+});
+
+test("external cron gets a quick acknowledgment and work runs after the response", async () => {
+  const req = new Request("https://web.curvedlines.ru/api/p2pobmen/process-deals", {
+    method: "POST", headers: { Authorization: "Bearer test-process-only", "X-P2P-Run-Mode": "background" },
+  });
+  const response = await processDeals(req);
+  assert.equal(response.status, 202);
+  assert.deepEqual(await response.json(), { queued: true });
+  assert.equal(mutations("SellerDealAccept").length, 0);
+  assert.equal(calls.filter(call => call.url.includes("yookassa")).length, 0);
+  assert.equal(deferred.length, 1);
+  await deferred.shift()();
+  assert.equal(mutations("SellerDealAccept").length, 1);
+  assert.equal(mutations("ChatCreateMessage").length, 1);
+});
+
+test("readiness validates configuration and session without accepting or charging", async () => {
+  scenario.expectedFirst = 1;
+  assert.equal((await readiness(request("GET", "wrong"))).status, 401);
+  assert.equal((await readiness(request("GET", "test-process-only"))).status, 200);
+  assert.equal(mutations("SellerDealAccept").length, 0);
+  assert.equal(calls.filter(call => call.url.includes("yookassa")).length, 0);
+});
+
+test("an expired session fails before acknowledging the external cron request", async () => {
+  process.env.P2POBMEN_AUTH_TOKEN = jwt("expired-background", 1);
+  scenario.refreshFails = true;
+  const response = await processDeals(new Request("https://web.curvedlines.ru/api/p2pobmen/process-deals", {
+    method: "POST", headers: { Authorization: "Bearer test-process-only", "X-P2P-Run-Mode": "background" },
+  }));
+  assert.equal(response.status, 503);
+  assert.equal(deferred.length, 0);
+  assert.equal(mutations("SellerDealAccept").length, 0);
 });
 
 test("missing payment configuration never accepts a real deal", async () => {
