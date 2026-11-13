@@ -3,12 +3,14 @@ import assert from "node:assert/strict";
 import { registerHooks } from "node:module";
 
 registerHooks({ resolve(specifier, context, nextResolve) {
+  if (specifier === "next/server") return nextResolve(new URL("./next-server.mjs", import.meta.url).href, context);
   try { return nextResolve(specifier, context); } catch (error) {
     if (error.code === "ERR_MODULE_NOT_FOUND" && specifier.startsWith(".") && !/\.[a-z]+$/.test(specifier)) return nextResolve(`${specifier}.ts`, context);
     throw error;
   }
 } });
-const { findExistingOrderPayment, parseOrderReference } = await import("../app/lib/existing-order-payment.ts");
+const { findExistingOrderPayment, parseOrderReference, resolvePaymentEntry } = await import("../app/lib/existing-order-payment.ts");
+const { GET: activePayment } = await import("../app/api/pay/active/route.ts");
 const dealId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 const otherId = "dddddddd-dddd-dddd-dddd-dddddddddddd";
 const paymentId = "01234567-1234-1234-1234-012345678901";
@@ -51,6 +53,12 @@ beforeEach(() => {
     assert.match(url, /^https:\/\/p2pobmen\.com\/api\/app\//);
     assert.match(body.query, /^query /, "lookup must not accept or confirm deals, or send chat messages");
     if (body.operationName === "AuthGetUser") return Response.json({ data: { auth: { currentUser: { guid: userId } } } });
+    if (body.operationName === "DealsSallerListLoad") {
+      assert.deepEqual(body.variables.filter, { state: ["ACCEPTED", "PAID"], userIdSeller: userId, isDeleted: false });
+      assert.equal(body.variables.first, 2);
+      const nodes = scenario.active ? scenario.active() : Object.values(scenario.deals).filter(item => ["ACCEPTED", "PAID"].includes(item.state));
+      return Response.json({ data: { exchange: { deal: { getDeals: { edges: nodes.slice(0, 2).map(node => ({ node })) } } } } });
+    }
     assert.equal(body.operationName, "P2pGetDeal");
     assert.equal(body.variables.filter.userIdSeller, userId);
     return Response.json({ data: { exchange: { deal: { getDeal: scenario.deals[body.variables.filter.id] || null } } } });
@@ -143,4 +151,71 @@ test("pagination is followed, while duplicate payments or incomplete scans never
   calls.length = 0;
   await assert.rejects(findExistingOrderPayment(dealId), /однозначно/);
   assert.equal(calls.filter(call => call.url.includes("/payments?")).length, 3);
+});
+
+test("the permanent link resolves the only accepted deal to its existing 107 RUB payment without manual ID", async () => {
+  scenario.deals[dealId] = deal(dealId, "107.00");
+  scenario.payments = [payment(dealId, "107.00")];
+  const result = await resolvePaymentEntry();
+  assert.equal(result.state, "ready");
+  assert.equal(result.confirmationUrl, scenario.payments[0].confirmation.confirmation_url);
+  assert.equal(calls.filter(call => call.body?.operationName === "DealsSallerListLoad").length, 2);
+});
+
+test("no accepted deal waits for the existing processor without billing or accepting anything", async () => {
+  scenario.deals[dealId].state = "NEW";
+  const result = await resolvePaymentEntry();
+  assert.equal(result.state, "waiting");
+  assert.equal(result.retryable, true);
+  assert.equal(result.confirmationUrl, undefined);
+  assert.equal(calls.some(call => call.url.includes("yookassa")), false);
+});
+
+test("two simultaneous accepted deals block the shared link without choosing either buyer", async () => {
+  scenario.deals[otherId] = deal(otherId, "1800.00");
+  const result = await resolvePaymentEntry();
+  assert.equal(result.state, "blocked");
+  assert.equal(result.retryable, false);
+  assert.equal(result.confirmationUrl, undefined);
+  assert.equal(calls.some(call => call.url.includes("yookassa")), false);
+  assert.equal(calls.some(call => call.body?.operationName === "P2pGetDeal"), false);
+});
+
+test("the shared link rechecks concurrency before redirecting if another deal appears during lookup", async () => {
+  let reads = 0;
+  scenario.active = () => ++reads === 1 ? [deal()] : [deal(), deal(otherId)];
+  const result = await resolvePaymentEntry();
+  assert.equal(result.state, "blocked");
+  assert.equal(result.confirmationUrl, undefined);
+});
+
+test("a payment that is not ready or already received cannot redirect or start a new charge", async () => {
+  scenario.payments = [];
+  assert.equal((await resolvePaymentEntry()).state, "waiting");
+  scenario.payments = [{ ...payment(), status: "succeeded", paid: true }];
+  const paid = await resolvePaymentEntry();
+  assert.equal(paid.state, "blocked");
+  assert.equal(paid.confirmationUrl, undefined);
+  assert.match(paid.message, /Оплата получена/);
+});
+
+test("the readiness endpoint is uncached and read-only, and malformed references stop before I/O", async () => {
+  const request = ref => new Request(`https://web.curvedlines.ru/api/pay/active${ref || ""}`);
+  const response = await activePayment(request());
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal((await response.json()).state, "ready");
+  scenario.deals[otherId] = deal(otherId);
+  assert.equal((await activePayment(request())).status, 409);
+  calls.length = 0;
+  assert.equal((await activePayment(request("?ref=123"))).status, 400);
+  assert.equal((await activePayment(request(`?ref=${dealId}&ref=${otherId}`))).status, 400);
+  assert.equal(calls.length, 0);
+});
+
+test("a personal reference continues to resolve its own deal when several deals are active", async () => {
+  scenario.deals[otherId] = deal(otherId, "1800.00");
+  const result = await resolvePaymentEntry(dealId);
+  assert.equal(result.state, "ready");
+  assert.equal(calls.some(call => call.body?.operationName === "DealsSallerListLoad"), false);
 });
