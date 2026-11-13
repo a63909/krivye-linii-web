@@ -57,8 +57,8 @@ async function processDeals(deadline: number, deals: DealNode[]) {
       }
       const url = dealPaymentUrl(payment);
       const message = "💳 Оплата по сделке #" + (deal.number || deal.id) + "\nСумма: " + amount + " ₽\n\n" +
-        "Перейдите по ссылке и оплатите через СБП:\n" + url + "\n\n" +
-        "После оплаты сделка будет подтверждена автоматически.";
+        "Для оплаты нажмите ссылку под QR-кодом в разделе «Данные получателя». Выберите банк — сумма уже указана.\n\n" +
+        "После успешной оплаты сделка будет подтверждена автоматически.";
       if (recovery) {
         requireRunTime(deadline, 8_000);
         item.stage = "check_chat";

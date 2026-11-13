@@ -131,7 +131,7 @@ test("manual and cron authorization are checked before any external request", as
   assert.equal((await cronDeals(request("GET", "test-cron"))).status, 200);
 });
 
-test("NEW seller deal is accepted, billed for exact RUB amount, and receives its SBP link", async () => {
+test("NEW seller deal is accepted, billed for exact RUB amount, and points the buyer to the link under the QR", async () => {
   const response = await processDeals(request());
   assert.equal(response.status, 200);
   const result = await response.json();
@@ -146,7 +146,10 @@ test("NEW seller deal is accepted, billed for exact RUB amount, and receives its
   const chat = mutations("ChatCreateMessage")[0];
   assert.equal(chat.body.variables.input.chatId, chatId);
   assert.match(chat.body.variables.input.message, /920\.01 ₽/);
-  assert.match(chat.body.variables.input.message, /https:\/\/yoomoney\.ru\/checkout\/test/);
+  assert.match(chat.body.variables.input.message, /нажмите ссылку под QR-кодом/);
+  assert.match(chat.body.variables.input.message, /«Данные получателя»/);
+  assert.doesNotMatch(chat.body.variables.input.message, /https?:\/\//);
+  assert.equal(result.results[0].payUrl, scenario.payment.confirmation.confirmation_url);
   assert.ok(calls.indexOf(mutations("SellerDealAccept")[0]) < calls.indexOf(provider));
   assert.ok(calls.indexOf(provider) < calls.indexOf(chat));
 });
