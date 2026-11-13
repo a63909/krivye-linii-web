@@ -32,7 +32,7 @@ export async function createPaymentForDeal(deal: DealNode) {
     amount: { value: amount, currency: "RUB" }, capture: true,
     payment_method_data: { type: "sbp" },
     confirmation: { type: "redirect", return_url: returnUrl.toString() },
-    description: `Сделка #${deal.number || deal.id} p2pobmen`,
+    orderId: `consult-${randomUUID()}`, description: "Онлайн-консультация",
     metadata: { source: "p2pobmen", order_id: orderId, expected_amount: amount, deal_id: deal.id, chat_id: deal.chat!.id },
   }, idempotenceKey(orderId));
   if (payment.amount.value !== amount || payment.amount.currency !== "RUB" ||
