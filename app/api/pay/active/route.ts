@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { resolvePaymentEntry } from "../../../lib/existing-order-payment";
 import { PaymentError } from "../../../lib/yookassa";
+import { P2pError } from "../../../lib/p2pobmen";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export async function GET(request: Request) {
     const result = await resolvePaymentEntry(query.get("ref")?.trim() || undefined);
     return NextResponse.json(result, { status: result.state === "blocked" ? 409 : 200, headers });
   } catch (error) {
-    const status = error instanceof PaymentError ? error.status : 503;
+    const status = error instanceof PaymentError || error instanceof P2pError ? error.status : 503;
     const message = error instanceof PaymentError ? error.message : "Не удалось загрузить платёж. Повторите попытку позже или обратитесь к продавцу.";
     return NextResponse.json({ state: "blocked", retryable: status >= 500, message }, { status, headers });
   }

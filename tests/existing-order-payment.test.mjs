@@ -21,7 +21,7 @@ let scenario;
 let calls;
 let sequence = 0;
 function deal(id = dealId, amount = "1200.00") {
-  return { id, number: id === dealId ? "123" : "124", state: "ACCEPTED", amount, amountCurrency: { code: "RUB" }, chat: { id: chatId }, dealWithTrustedUser: false };
+  return { id, number: id === dealId ? "123" : "124", state: "ACCEPTED", amount, amountCurrency: { id: "69d8bf73-f963-4aae-8825-f0c500ab9c8c", name: "RUB", code: null }, chat: { id: chatId }, dealWithTrustedUser: false };
 }
 function payment(id = dealId, amount = "1200.00") {
   return { id: paymentId, status: "pending", paid: false, test: false, recipient: { account_id: "1515932" },
@@ -85,6 +85,16 @@ test("loads exactly 1200 RUB from the selected order and reuses its existing SBP
   assert.equal(result.confirmationUrl, scenario.payments[0].confirmation.confirmation_url);
   assert.ok(calls.some(call => call.body?.operationName === "P2pGetDeal"));
   assert.ok(calls.some(call => call.url.includes("/payments?")));
+});
+
+test("an unsupported platform currency is a blocked 409, not a generic retrying 503", async () => {
+  scenario.deals[dealId].amountCurrency = { id: otherId, name: "USD", code: "fiat" };
+  const response = await activePayment(new Request("https://web.curvedlines.ru/api/pay/active"));
+  assert.equal(response.status, 409);
+  const data = await response.json();
+  assert.equal(data.state, "blocked");
+  assert.equal(data.retryable, false);
+  assert.equal(calls.some(call => call.url.includes("yookassa")), false);
 });
 
 test("two simultaneous buyers are bound to their own orders instead of the latest active order", async () => {
