@@ -43,8 +43,9 @@ beforeEach(() => {
   process.env.YOOKASSA_SECRET_KEY = "test-provider-key";
   process.env.PAYMENT_SITE_URL = "https://web.curvedlines.ru";
   scenario = {
-    deal: { id: dealId, number: "123", state: "NEW", amount: "920.01", amountCurrency: { code: "RUB" }, chat: { id: chatId }, dealWithTrustedUser: false },
-    payment: { id: paymentId, status: "pending", paid: false, test: false, recipient: { account_id: "1515932" }, amount: { value: "920.01", currency: "RUB" },
+    deal: { id: dealId, number: "123", state: "NEW", createdAt: new Date(Date.now() - 60_000).toISOString(), amount: "920.01", amountCurrency: { code: "RUB" }, chat: { id: chatId }, dealWithTrustedUser: false },
+    payments: [], chatMessages: [],
+    payment: { id: paymentId, payment_method: { type: "sbp" }, status: "pending", paid: false, test: false, recipient: { account_id: "1515932" }, amount: { value: "920.01", currency: "RUB" },
       metadata: { source: "p2pobmen", order_id: `p2p-${dealId}`, expected_amount: "920.01", deal_id: dealId, chat_id: chatId },
       confirmation: { confirmation_url: "https://yoomoney.ru/checkout/test" } },
   };
@@ -54,6 +55,15 @@ beforeEach(() => {
     calls.push({ url, options, body });
     if (String(url).startsWith("https://api.yookassa.ru/v3/")) {
       if (scenario.providerFails) return new Response("unavailable", { status: 503 });
+      if (options?.method === "GET" && String(url).includes("payments?")) {
+        if (scenario.listFails) return new Response("unavailable", { status: 503 });
+        const cursor = new URL(url).searchParams.get("cursor") || "";
+        return Response.json(scenario.listPages?.[cursor] || { items: scenario.listItems || scenario.payments });
+      }
+      if (options?.method === "POST") {
+        if (!scenario.payments.some(payment => payment.id === scenario.payment.id)) scenario.payments.push(structuredClone(scenario.payment));
+        if (scenario.providerResponseLost) throw new Error("fixture response lost");
+      }
       return Response.json(scenario.payment);
     }
     assert.match(String(url), /^https:\/\/p2pobmen\.com\/api\/app\//);
@@ -67,7 +77,8 @@ beforeEach(() => {
       case "AuthRefreshToken": return Response.json({ data: { auth: { refreshToken: scenario.refreshFails ? null : { token: scenario.refreshedToken } } } });
       case "AuthGetUser": return Response.json({ data: { auth: { currentUser: { guid: userId } } } });
       case "DealsSallerListLoad": {
-        assert.deepEqual(body.variables.filter, { state: ["NEW"], userIdSeller: userId, isDeleted: false });
+        assert.deepEqual(body.variables.filter, { state: scenario.expectedFirst === 1 ? ["NEW"] : ["NEW", "ACCEPTED"], userIdSeller: userId, isDeleted: false });
+        scenario.advanceTime?.();
         assert.equal(body.variables.first, scenario.expectedFirst || 15);
         return Response.json({ data: { exchange: { deal: { getDeals: { edges: (scenario.deals || [scenario.deal]).map(node => ({ node })) } } } } });
       }
@@ -78,11 +89,16 @@ beforeEach(() => {
       }
       case "ChatCreateMessage": {
         if (scenario.chatFails) throw new Error("network failure");
+        scenario.chatMessages.push({ message: body.variables.input.message, user: { guid: userId }, isDeleted: false, isSystem: false });
+        if (scenario.chatResponseLost) throw new Error("fixture response lost");
         return Response.json({ data: { chat: { createChatMessage: { id: "message-1" } } } });
       }
+      case "ChatLoad": return Response.json({ data: { chat: { getChat: { chatMessages: {
+        edges: scenario.chatMessages.map(node => ({ node })), pageInfo: { hasNextPage: scenario.incompleteChat || false, hasPreviousPage: false }
+      } } } } });
       case "P2pGetDeal": {
         assert.deepEqual(body.variables.filter, { id: dealId, userIdSeller: userId, isDeleted: false });
-        return Response.json({ data: { exchange: { deal: { getDeal: scenario.missingDeal ? null : scenario.deal } } } });
+        return Response.json({ data: { exchange: { deal: { getDeal: scenario.missingDeal ? null : scenario.latestDeal || scenario.deal } } } });
       }
       case "PaidSellerDealAccept": {
         if (scenario.confirmFails) return Response.json({ errors: [{ message: "private error" }] });
@@ -311,4 +327,214 @@ test("malformed webhook input and unrelated events do not call external APIs", a
   }
   assert.equal((await webhook(notification("refund.succeeded"))).status, 200);
   assert.equal(calls.length, 0);
+});
+
+function paymentPosts() { return calls.filter(call => call.url === "https://api.yookassa.ru/v3/payments" && call.options.method === "POST"); }
+
+test("an 8-second initial listing no longer silently skips a NEW deal", async () => {
+  const now = Date.now, start = now();
+  let clock = start;
+  Date.now = () => clock;
+  scenario.advanceTime = () => { clock += 8_000; };
+  try {
+    const response = await processDeals(request());
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).results[0].status, "ok");
+    assert.equal(mutations("SellerDealAccept").length, 1);
+    assert.equal(paymentPosts().length, 1);
+    assert.equal(mutations("ChatCreateMessage").length, 1);
+  } finally { Date.now = now; }
+});
+
+test("a genuinely exhausted budget defers work visibly without accepting a deal", async () => {
+  const now = Date.now, start = now();
+  let clock = start;
+  Date.now = () => clock;
+  scenario.advanceTime = () => { clock += 24_000; };
+  try {
+    const response = await processDeals(request());
+    assert.equal(response.status, 503);
+    const result = await response.json();
+    assert.equal(result.processed, 0);
+    assert.equal(result.remaining, 1);
+    assert.equal(result.results[0].status, "deferred");
+    assert.equal(mutations("SellerDealAccept").length, 0);
+    assert.equal(paymentPosts().length, 0);
+  } finally { Date.now = now; }
+});
+
+test("background deferral is logged as deferred, never as scheduled run complete", async () => {
+  const now = Date.now, warn = console.warn, info = console.info;
+  let clock = now();
+  const logs = [];
+  Date.now = () => clock;
+  console.warn = (...args) => logs.push(args);
+  console.info = (...args) => logs.push(args);
+  scenario.advanceTime = () => { clock += 24_000; };
+  try {
+    const response = await processDeals(new Request("https://web.curvedlines.ru/api/p2pobmen/process-deals", {
+      method: "POST", headers: { Authorization: "Bearer test-process-only", "X-P2P-Run-Mode": "background" },
+    }));
+    assert.equal(response.status, 202);
+    await deferred.shift()();
+    assert.equal(logs.length, 1);
+    assert.equal(logs[0][0], "[p2pobmen] scheduled run deferred");
+    assert.equal(logs[0][1].remaining, 1);
+  } finally { Date.now = now; console.warn = warn; console.info = info; }
+});
+
+test("a billing failure after acceptance is resumed on the next run with the identical key and body", async () => {
+  scenario.providerFails = true;
+  assert.equal((await processDeals(request())).status, 502);
+  assert.equal(scenario.deal.state, "ACCEPTED");
+  scenario.providerFails = false;
+  const response = await processDeals(request());
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).results[0].status, "recovered");
+  assert.equal(mutations("SellerDealAccept").length, 1);
+  const attempts = paymentPosts();
+  assert.equal(attempts.length, 2);
+  assert.equal(attempts[0].options.headers["Idempotence-Key"], attempts[1].options.headers["Idempotence-Key"]);
+  assert.deepEqual(attempts[0].body, attempts[1].body);
+  assert.equal(mutations("ChatCreateMessage").length, 1);
+});
+
+test("chat failure reuses the existing payment and subsequent runs do not spam the same seller link", async () => {
+  scenario.chatFails = true;
+  assert.equal((await processDeals(request())).status, 502);
+  scenario.chatFails = false;
+  const recovered = await processDeals(request());
+  assert.equal(recovered.status, 200);
+  assert.equal((await recovered.json()).results[0].status, "recovered");
+  const repeated = await processDeals(request());
+  assert.equal((await repeated.json()).results[0].status, "already_sent");
+  assert.equal(paymentPosts().length, 1);
+  assert.equal(mutations("SellerDealAccept").length, 1);
+  assert.equal(mutations("ChatCreateMessage").length, 2); // failed delivery + successful retry
+  assert.equal(scenario.chatMessages.length, 1);
+});
+
+test("a lost billing response is recovered by GET without another creation request", async () => {
+  scenario.providerResponseLost = true;
+  assert.equal((await processDeals(request())).status, 502);
+  assert.equal(scenario.payments.length, 1);
+  scenario.providerResponseLost = false;
+  assert.equal((await processDeals(request())).status, 200);
+  assert.equal(paymentPosts().length, 1);
+  assert.equal(scenario.chatMessages.length, 1);
+});
+
+test("a lost chat acknowledgment does not send the already delivered message again", async () => {
+  scenario.chatResponseLost = true;
+  assert.equal((await processDeals(request())).status, 502);
+  assert.equal(scenario.chatMessages.length, 1);
+  scenario.chatResponseLost = false;
+  const response = await processDeals(request());
+  assert.equal((await response.json()).results[0].status, "already_sent");
+  assert.equal(mutations("ChatCreateMessage").length, 1);
+  assert.equal(paymentPosts().length, 1);
+});
+
+test("a manually accepted fresh deal is billed without accepting it again", async () => {
+  scenario.deal.state = "ACCEPTED";
+  const response = await processDeals(request());
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).results[0].status, "recovered");
+  assert.equal(mutations("SellerDealAccept").length, 0);
+  assert.equal(paymentPosts().length, 1);
+});
+
+test("old, unknown, ambiguous-timezone and future deal dates cannot create a payment", async () => {
+  scenario.deal.state = "ACCEPTED";
+  for (const createdAt of [null, "invalid", new Date(Date.now() - 24 * 60 * 60_000).toISOString(), new Date(Date.now() + 60_000).toISOString(), new Date().toISOString().slice(0, -1)]) {
+    scenario.deal.createdAt = createdAt;
+    assert.equal((await processDeals(request())).status, 502);
+  }
+  assert.equal(paymentPosts().length, 0);
+  assert.equal(mutations("ChatCreateMessage").length, 0);
+});
+
+test("an older accepted deal can reuse a verified existing payment, without creating another", async () => {
+  scenario.deal.state = "ACCEPTED";
+  scenario.deal.createdAt = new Date(Date.now() - 25 * 60 * 60_000).toISOString();
+  scenario.payments = [structuredClone(scenario.payment)];
+  assert.equal((await processDeals(request())).status, 200);
+  assert.equal(paymentPosts().length, 0);
+  assert.equal(scenario.chatMessages.length, 1);
+});
+
+test("existing successful payment suppresses billing and chat; webhook confirmation remains separate", async () => {
+  scenario.deal.state = "ACCEPTED";
+  scenario.payments = [structuredClone(scenario.payment)];
+  scenario.payment.status = "succeeded";
+  scenario.payment.paid = true;
+  const response = await processDeals(request());
+  assert.equal((await response.json()).results[0].status, "already_paid");
+  assert.equal(paymentPosts().length, 0);
+  assert.equal(mutations("ChatCreateMessage").length, 0);
+  assert.equal(mutations("PaidSellerDealAccept").length, 0);
+});
+
+test("failed or incomplete payment lookup never falls through to a new creation request", async () => {
+  scenario.deal.state = "ACCEPTED";
+  scenario.listFails = true;
+  assert.equal((await processDeals(request())).status, 502);
+  scenario.listFails = false;
+  scenario.listPages = { "": { items: [], next_cursor: "repeat" }, repeat: { items: [], next_cursor: "repeat" } };
+  assert.equal((await processDeals(request())).status, 502);
+  scenario.listPages = { "": { items: [], next_cursor: "one" }, one: { items: [], next_cursor: "two" }, two: { items: [], next_cursor: "three" } };
+  assert.equal((await processDeals(request())).status, 502);
+  assert.equal(paymentPosts().length, 0);
+});
+
+test("ambiguous or mismatched existing payments block recovery without creating a replacement", async () => {
+  scenario.deal.state = "ACCEPTED";
+  const valid = structuredClone(scenario.payment);
+  scenario.payments = [valid, { ...valid, id: userId }];
+  assert.equal((await processDeals(request())).status, 502);
+  for (const change of [
+    { amount: { value: "1.00", currency: "RUB" } },
+    { recipient: { account_id: "another-shop" } },
+    { test: true },
+    { payment_method: { type: "bank_card" } },
+    { metadata: { ...valid.metadata, chat_id: userId } },
+  ]) {
+    scenario.payments = [{ ...valid, ...change }];
+    assert.equal((await processDeals(request())).status, 502);
+  }
+  assert.equal(paymentPosts().length, 0);
+  assert.equal(mutations("ChatCreateMessage").length, 0);
+});
+
+test("expired, canceled and unsafe payment links never generate a second payment or message", async () => {
+  scenario.deal.state = "ACCEPTED";
+  const valid = structuredClone(scenario.payment);
+  scenario.payments = [valid];
+  for (const change of [
+    { expires_at: new Date(Date.now() - 1000).toISOString() },
+    { status: "canceled" },
+    { confirmation: { confirmation_url: "https://example.com/wrong" } },
+  ]) {
+    scenario.payment = { ...valid, ...change };
+    assert.equal((await processDeals(request())).status, 502);
+  }
+  assert.equal(paymentPosts().length, 0);
+  assert.equal(mutations("ChatCreateMessage").length, 0);
+});
+
+test("buyer text cannot impersonate delivery of a seller's payment link", async () => {
+  assert.equal((await processDeals(request())).status, 200);
+  scenario.chatMessages[0].user.guid = "dddddddd-dddd-dddd-dddd-dddddddddddd";
+  const response = await processDeals(request());
+  assert.equal((await response.json()).results[0].status, "recovered");
+  assert.equal(paymentPosts().length, 1);
+  assert.equal(mutations("ChatCreateMessage").length, 2);
+});
+
+test("a state change after the scheduler snapshot suppresses payment recovery", async () => {
+  scenario.deal.state = "ACCEPTED";
+  scenario.latestDeal = { ...scenario.deal, state: "CLOSED" };
+  const response = await processDeals(request());
+  assert.equal((await response.json()).results[0].status, "state_changed");
+  assert.equal(calls.filter(call => call.url.includes("yookassa")).length, 0);
 });
