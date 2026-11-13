@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { confirmPaymentRecieve, getMyDeal, P2pError, type DealNode } from "./p2pobmen";
 import { idempotenceKey, PaymentError, providerRequest, siteOrigin, type Payment } from "./yookassa";
 
