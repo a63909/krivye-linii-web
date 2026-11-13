@@ -1,4 +1,4 @@
-import { getMyDeal } from "./p2pobmen";
+import { getMyDeal, getMyDeals } from "./p2pobmen";
 import { dealAmount } from "./p2pobmen-payments";
 import { PaymentError, providerRequest, type Payment } from "./yookassa";
 
@@ -13,6 +13,13 @@ export type OrderPaymentView = {
   state: "pending" | "paid" | "closed" | "waiting";
   confirmationUrl?: string;
   message: string;
+};
+
+export type PaymentEntryResolution = {
+  state: "ready" | "waiting" | "blocked";
+  message: string;
+  retryable: boolean;
+  confirmationUrl?: string;
 };
 
 // An unpredictable deal UUID or an existing provider link is the access key.
@@ -131,4 +138,37 @@ export async function findExistingOrderPayment(input: string): Promise<OrderPaym
     return { ...view, state: "waiting", message: "Срок платёжной ссылки истёк. Запросите актуальную ссылку у продавца." };
   }
   return { ...view, state: "pending", confirmationUrl: confirmationUrl(payment), message: "Сумма получена из вашей заявки. Вводить её повторно не нужно." };
+}
+
+// A shared link has no buyer/deal identifier and works only for exactly one
+// accepted unpaid seller deal. Never choose the latest of several deals.
+// This path only reads; the existing processor remains responsible for billing.
+export async function resolvePaymentEntry(reference?: string): Promise<PaymentEntryResolution> {
+  let selected = reference;
+  if (!selected) {
+    const deals = await getMyDeals(["ACCEPTED", "PAID"], 2);
+    if (!deals.length) {
+      return { state: "waiting", message: "Ждём подготовки платежа по заявке. Страница обновится автоматически.", retryable: true };
+    }
+    if (deals.length !== 1) {
+      return { state: "blocked", message: "Одновременно ожидают оплаты несколько заявок. Откройте персональную платёжную ссылку из чата вашей сделки.", retryable: false };
+    }
+    selected = deals[0].id;
+  }
+  // Re-read the selected deal and verify amount, currency, shop, status and
+  // expiry against its existing payment immediately before redirecting.
+  const payment = await findExistingOrderPayment(selected);
+  if (payment.state === "pending" && payment.confirmationUrl) {
+    if (!reference) {
+      const current = await getMyDeals(["ACCEPTED", "PAID"], 2);
+      if (current.length !== 1 || current[0].id !== selected) {
+        return { state: "blocked", message: "Состав ожидающих заявок изменился. Откройте персональную платёжную ссылку из чата вашей сделки.", retryable: false };
+      }
+      if (current[0].state !== "ACCEPTED") {
+        return { state: "waiting", message: "Проверяем получение оплаты. Повторно платить пока не нужно.", retryable: true };
+      }
+    }
+    return { state: "ready", message: "Открываем выбор банка…", retryable: false, confirmationUrl: payment.confirmationUrl };
+  }
+  return { state: payment.state === "waiting" ? "waiting" : "blocked", message: payment.message, retryable: payment.state === "waiting" };
 }

@@ -1,43 +1,23 @@
-import Link from "next/link";
-import { findExistingOrderPayment, type OrderPaymentView } from "../lib/existing-order-payment";
+import { redirect } from "next/navigation";
+import { resolvePaymentEntry, type PaymentEntryResolution } from "../lib/existing-order-payment";
 import { PaymentError } from "../lib/yookassa";
-import styles from "./payment.module.css";
-import entry from "./payment-entry.module.css";
+import PaymentWaiting from "./payment-waiting";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 export default async function PaymentEntry({ searchParams }: { searchParams: Promise<{ ref?: string | string[] }> }) {
   const params = await searchParams;
-  const reference = typeof params.ref === "string" ? params.ref.trim() : "";
-  let payment: OrderPaymentView | undefined;
-  let message = "";
-  if (reference) {
-    try { payment = await findExistingOrderPayment(reference); }
-    catch (error) {
-      message = error instanceof PaymentError ? error.message : "Не удалось загрузить оплату. Повторите попытку позже или обратитесь к продавцу.";
-    }
+  const reference = typeof params.ref === "string" ? params.ref.trim() : undefined;
+  let result: PaymentEntryResolution;
+  try {
+    if (Array.isArray(params.ref)) throw new PaymentError("Не удалось определить заявку.");
+    result = await resolvePaymentEntry(reference);
+  } catch (error) {
+    const retryable = !(error instanceof PaymentError) || error.status >= 500;
+    result = { state: retryable ? "waiting" : "blocked", retryable, message: error instanceof PaymentError ? error.message : "Не удалось загрузить платёж. Повторите попытку позже или обратитесь к продавцу." };
   }
-  return <>
-    <h1>Оплата заявки</h1>
-    {payment ? <>
-      <p className={styles.eyebrow}>ЗАЯВКА {payment.orderLabel}</p>
-      <p className={styles.amount}>{Number(payment.amount).toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</p>
-      <p role="status">{payment.message}</p>
-      {payment.confirmationUrl && <a className={styles.button} href={payment.confirmationUrl} rel="noreferrer">Оплатить через СБП</a>}
-      {payment.state === "pending" && <p>Проверьте заявку и сумму. На телефоне откроется выбор банка, на компьютере — QR-код оплаты.</p>}
-      {payment.state === "waiting" && <a className={entry.retry} href={`/pay?ref=${encodeURIComponent(reference)}`}>Обновить статус</a>}
-      <Link href="/pay" prefetch={false}>Указать другую заявку</Link>
-    </> : <>
-      <p>Вставьте ссылку на вашу заявку или её полный ID. Сумма подставится автоматически.</p>
-      <form className={entry.form} action="/pay" method="get">
-        <label className={entry.label} htmlFor="order-reference">Ссылка или ID заявки</label>
-        <input className={entry.input} id="order-reference" name="ref" type="text" required maxLength={1200} autoComplete="off" autoCapitalize="none" spellCheck={false} defaultValue={reference.slice(0, 1200)} placeholder="Вставьте ссылку на заявку" aria-describedby={message ? "payment-error" : "reference-help"} />
-        <p className={entry.hint} id="reference-help">Полный ID выглядит так: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx. Также подойдёт платёжная ссылка из чата заявки.</p>
-        {message && <p className={entry.error} id="payment-error" role="alert">{message}</p>}
-        <button className={styles.button} type="submit">Найти оплату</button>
-      </form>
-      <p>Постоянный QR открывает эту страницу. Для каждой заявки используется её собственная сумма и платёжная ссылка.</p>
-    </>}
-  </>;
+  // Next's redirect throws a control-flow exception: keep it outside the catch.
+  if (result.state === "ready" && result.confirmationUrl) redirect(result.confirmationUrl);
+  return <PaymentWaiting initial={result} reference={reference} />;
 }
