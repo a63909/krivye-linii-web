@@ -8,7 +8,8 @@ export type DealNode = {
   createdAt?: string | null;
   // DealNode.amount is the amount transferred to the seller. amountWithdrawal belongs to LotNode.
   amount: string | number | null;
-  amountCurrency: { code: string } | null;
+  // Currency.code is a platform category (fiat/crypto/null), not an ISO code.
+  amountCurrency: { id?: string; name?: string; code: string | null } | null;
   chat: { id: string } | null;
   dealWithTrustedUser: boolean;
 };
@@ -22,7 +23,7 @@ type Session = { token: string; userId: string; expiresAt: number };
 type LoginResult = { token?: string | null; twoFactorIsUsed?: boolean; challengeId?: string | null };
 type Envelope<T> = { data?: T; errors?: unknown[] };
 let cachedSession: { key: string; promise: Promise<Session> } | undefined;
-const fields = "id number state createdAt amount amountCurrency { code } chat { id } dealWithTrustedUser";
+const fields = "id number state createdAt amount amountCurrency { id name code } chat { id } dealWithTrustedUser";
 const uuidPattern = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
 
 function requireId(id: string) {

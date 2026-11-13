@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { resolvePaymentEntry, type PaymentEntryResolution } from "../lib/existing-order-payment";
 import { PaymentError } from "../lib/yookassa";
+import { P2pError } from "../lib/p2pobmen";
 import PaymentWaiting from "./payment-waiting";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export default async function PaymentEntry({ searchParams }: { searchParams: Pro
     if (Array.isArray(params.ref)) throw new PaymentError("Не удалось определить заявку.");
     result = await resolvePaymentEntry(reference);
   } catch (error) {
-    const retryable = !(error instanceof PaymentError) || error.status >= 500;
+    const retryable = !(error instanceof PaymentError || error instanceof P2pError) || error.status >= 500;
     result = { state: retryable ? "waiting" : "blocked", retryable, message: error instanceof PaymentError ? error.message : "Не удалось загрузить платёж. Повторите попытку позже или обратитесь к продавцу." };
   }
   // Next's redirect throws a control-flow exception: keep it outside the catch.

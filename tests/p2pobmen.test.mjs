@@ -43,7 +43,7 @@ beforeEach(() => {
   process.env.YOOKASSA_SECRET_KEY = "test-provider-key";
   process.env.PAYMENT_SITE_URL = "https://web.curvedlines.ru";
   scenario = {
-    deal: { id: dealId, number: "123", state: "NEW", createdAt: new Date(Date.now() - 60_000).toISOString(), amount: "920.01", amountCurrency: { code: "RUB" }, chat: { id: chatId }, dealWithTrustedUser: false },
+    deal: { id: dealId, number: "123", state: "NEW", createdAt: new Date(Date.now() - 60_000).toISOString(), amount: "920.01", amountCurrency: { id: "69d8bf73-f963-4aae-8825-f0c500ab9c8c", name: "RUB", code: null }, chat: { id: chatId }, dealWithTrustedUser: false },
     payments: [], chatMessages: [],
     payment: { id: paymentId, payment_method: { type: "sbp" }, status: "pending", paid: false, test: false, recipient: { account_id: "1515932" }, amount: { value: "920.01", currency: "RUB" },
       metadata: { source: "p2pobmen", order_id: `p2p-${dealId}`, expected_amount: "920.01", deal_id: dealId, chat_id: chatId },
@@ -330,6 +330,34 @@ test("malformed webhook input and unrelated events do not call external APIs", a
 });
 
 function paymentPosts() { return calls.filter(call => call.url === "https://api.yookassa.ru/v3/payments" && call.options.method === "POST"); }
+
+test("the live RUB directory record with code null bills 107 RUB, not the 1 USD room amount", async () => {
+  scenario.deal.amount = "107.00";
+  scenario.deal.amountLot = "1.00";
+  scenario.deal.amountLotCurrency = { name: "USD", code: "fiat" };
+  assert.equal(scenario.deal.amountCurrency.code, null);
+  scenario.payment.amount.value = "107.00";
+  scenario.payment.metadata.expected_amount = "107.00";
+  const response = await processDeals(request());
+  assert.equal(response.status, 200);
+  assert.deepEqual(paymentPosts()[0].body.amount, { value: "107.00", currency: "RUB" });
+  assert.match(mutations("ChatCreateMessage")[0].body.variables.input.message, /107\.00 ₽/);
+  assert.match(mutations("DealsSallerListLoad")[0].body.query, /amountCurrency \{ id name code \}/);
+});
+
+test("a RUB label or ISO-looking code cannot substitute for the ruble's verified directory ID", async () => {
+  for (const currency of [
+    { id: userId, name: "RUB", code: "RUB" },
+    { id: "69d8bf73-f963-4aae-8825-f0c500ab9c8c", name: "USD", code: "RUB" },
+    { name: "RUB", code: null },
+    { code: "RUB" },
+  ]) {
+    scenario.deal.amountCurrency = currency;
+    assert.equal((await processDeals(request())).status, 502);
+  }
+  assert.equal(mutations("SellerDealAccept").length, 0);
+  assert.equal(paymentPosts().length, 0);
+});
 
 test("an 8-second initial listing no longer silently skips a NEW deal", async () => {
   const now = Date.now, start = now();

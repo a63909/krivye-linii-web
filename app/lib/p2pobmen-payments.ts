@@ -2,7 +2,11 @@ import { confirmPaymentRecieve, getMyDeal, P2pError, type DealNode } from "./p2p
 import { idempotenceKey, PaymentError, providerRequest, siteOrigin, type Payment } from "./yookassa";
 
 export function dealAmount(deal: DealNode) {
-  if (deal.amountCurrency?.code !== "RUB") throw new P2pError("Валюта сделки должна быть RUB", 409);
+  // Verified against the provider's public currency directory: RUB has a null
+  // code; the ISO-looking currency name and its fixed ID identify the ruble.
+  if (deal.amountCurrency?.id !== "69d8bf73-f963-4aae-8825-f0c500ab9c8c" || deal.amountCurrency.name !== "RUB") {
+    throw new P2pError("Валюта сделки должна быть RUB", 409);
+  }
   const match = /^(\d{1,9})(?:[.,](\d+))?$/.exec(String(deal.amount ?? ""));
   if (!match || /[1-9]/.test((match[2] || "").slice(2))) throw new P2pError("Сумма сделки должна быть точной до копейки", 409);
   const rubles = String(Number(match[1]));
