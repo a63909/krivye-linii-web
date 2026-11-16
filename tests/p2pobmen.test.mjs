@@ -52,7 +52,13 @@ beforeEach(() => {
   };
   calls = [];
   globalThis.fetch = async (url, options) => {
-    const body = options?.body ? JSON.parse(options.body) : undefined;
+    const multipart = options?.body instanceof FormData ? options.body : undefined;
+    const body = multipart ? JSON.parse(multipart.get("operations")) : options?.body ? JSON.parse(options.body) : undefined;
+    if (multipart) {
+      assert.deepEqual(JSON.parse(multipart.get("map")), { "1": ["variables.input.files.0"] });
+      assert.equal(options.headers["Content-Type"], undefined, "fetch must set the multipart boundary");
+      assert.deepEqual(body.variables.input.files, [null]);
+    }
     calls.push({ url, options, body });
     if (String(url).startsWith("https://api.yookassa.ru/v3/")) {
       if (scenario.providerFails) return new Response("unavailable", { status: 503 });
@@ -95,9 +101,14 @@ beforeEach(() => {
       }
       case "ChatCreateMessage": {
         if (scenario.chatFails) throw new Error("network failure");
-        scenario.chatMessages.push({ chatId: body.variables.input.chatId, message: body.variables.input.message, user: { guid: userId }, isDeleted: false, isSystem: false });
+        const file = multipart?.get("1");
+        assert.equal(file?.type, "application/pdf");
+        assert.ok(file.size > 1000 && file.size < 150_000);
+        assert.equal(Buffer.from(await file.arrayBuffer()).subarray(0, 5).toString(), "%PDF-");
+        const files = { edges: scenario.attachmentMissing ? [] : [{ node: { url: "https://p2pobmen.com/media/test.pdf", mediaData: { fileNameSource: file.name, mimeType: file.type } } }] };
+        scenario.chatMessages.push({ chatId: body.variables.input.chatId, message: body.variables.input.message, user: { guid: userId }, isDeleted: false, isSystem: false, files });
         if (scenario.chatResponseLost) throw new Error("fixture response lost");
-        return Response.json({ data: { chat: { createChatMessage: { id: "message-1" } } } });
+        return Response.json({ data: { chat: { createChatMessage: { id: "message-1", files } } } });
       }
       case "ChatLoad": return Response.json({ data: { chat: { getChat: { chatMessages: {
         edges: scenario.chatMessages.filter(node => !node.chatId || node.chatId === body.variables.id).map(node => ({ node })), pageInfo: { hasNextPage: scenario.incompleteChat || false, hasPreviousPage: false }
@@ -155,6 +166,8 @@ test("NEW seller deal is accepted, billed for exact RUB amount, and receives its
   assert.equal(chat.body.variables.input.chatId, chatId);
   assert.match(chat.body.variables.input.message, /920\.01 ₽/);
   assert.ok(chat.body.variables.input.message.includes(`https://web.curvedlines.ru/pay/sbp/${paymentId}`));
+  assert.match(chat.body.variables.input.message, /Откройте прикреплённый файл «Оплатить-123.pdf»/);
+  assert.match(chat.body.variables.input.message, /скопируйте и откройте её в браузере/);
   assert.doesNotMatch(chat.body.variables.input.message, /https:\/\/yoomoney\.ru\//);
   assert.doesNotMatch(chat.body.variables.input.message, /ссылку под QR-кодом/);
   assert.equal(result.results[0].payUrl, scenario.payment.confirmation.confirmation_url);
@@ -212,6 +225,18 @@ test("a pending deal with the old generic QR instruction receives its personal l
   assert.equal(mutations("ChatCreateMessage").length, 1);
   assert.equal(paymentPosts().length, 0);
   assert.equal(mutations("SellerDealAccept").length, 0);
+});
+
+test("a missing bill is not treated as delivered, and retries reuse the same payment", async () => {
+  scenario.attachmentMissing = true;
+  assert.equal((await processDeals(request())).status, 502);
+  assert.equal(scenario.chatMessages[0].files.edges.length, 0);
+  scenario.attachmentMissing = false;
+  assert.equal((await processDeals(request())).status, 200);
+  assert.equal(scenario.chatMessages[1].files.edges.length, 1);
+  assert.equal((await processDeals(request())).status, 200);
+  assert.equal(mutations("ChatCreateMessage").length, 2);
+  assert.equal(paymentPosts().length, 1);
 });
 
 test("external cron gets a quick acknowledgment and work runs after the response", async () => {
