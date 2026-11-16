@@ -2,7 +2,7 @@ import { after, NextResponse } from "next/server";
 import { acceptDeal, getMyDeal, getMyDeals, hasSellerChatMessage, p2pError, requireP2pSession, sendChatMessage, type DealNode } from "../../../lib/p2pobmen";
 import { requireProcessAuth } from "../../../lib/p2pobmen-auth";
 import { createPaymentForDeal, validateDeal } from "../../../lib/p2pobmen-payments";
-import { dealPaymentUrl, findRecoverablePayment, requireRecentDeal, requireRunTime, RunDeferred, validateDealPayment } from "../../../lib/p2pobmen-recovery";
+import { dealPaymentUrl, findRecoverablePayment, personalPaymentUrl, requireRecentDeal, requireRunTime, RunDeferred, validateDealPayment } from "../../../lib/p2pobmen-recovery";
 import { paymentError, requirePaymentConfiguration } from "../../../lib/yookassa";
 
 export const runtime = "nodejs";
@@ -56,8 +56,10 @@ async function processDeals(deadline: number, deals: DealNode[]) {
         item.status = "already_paid"; results.push(item); continue;
       }
       const url = dealPaymentUrl(payment);
+      const paymentLink = personalPaymentUrl(payment);
       const message = "💳 Оплата по сделке #" + (deal.number || deal.id) + "\nСумма: " + amount + " ₽\n\n" +
-        "Для оплаты нажмите ссылку под QR-кодом в разделе «Данные получателя». Выберите банк — сумма уже указана.\n\n" +
+        "Оплатить через СБП:\n" + paymentLink + "\n\n" +
+        "Нажмите эту ссылку и выберите банк — сумма уже указана. Ссылка относится только к вашей сделке.\n\n" +
         "После успешной оплаты сделка будет подтверждена автоматически.";
       if (recovery) {
         requireRunTime(deadline, 8_000);
@@ -69,7 +71,7 @@ async function processDeals(deadline: number, deals: DealNode[]) {
       requireRunTime(deadline, 8_000);
       item.stage = "send_chat";
       await sendChatMessage(deal.chat!.id, message);
-      Object.assign(item, { status: recovery ? "recovered" : "ok", payUrl: url, amount });
+      Object.assign(item, { status: recovery ? "recovered" : "ok", payUrl: url, paymentLink, amount });
     } catch (error) {
       if (error instanceof RunDeferred) {
         item.status = "deferred";

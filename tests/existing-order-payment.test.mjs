@@ -48,7 +48,7 @@ beforeEach(() => {
         assert.ok(query.get("created_at.gte"));
         return Response.json(scenario.list ? scenario.list(query.get("cursor")) : { items: scenario.payments });
       }
-      return Response.json(scenario.payments[0]);
+      return Response.json(scenario.payments.find(payment => url.endsWith("/" + payment.id)) || scenario.payments[0]);
     }
     assert.match(url, /^https:\/\/p2pobmen\.com\/api\/app\//);
     assert.match(body.query, /^query /, "lookup must not accept or confirm deals, or send chat messages");
@@ -70,8 +70,9 @@ test("accepts unguessable references and rejects short numbers and foreign or am
   assert.deepEqual(parseOrderReference(`p2p-${dealId}`), { kind: "deal", id: dealId });
   assert.deepEqual(parseOrderReference(`https://p2pobmen.com/deals/${dealId}`), { kind: "deal", id: dealId });
   assert.deepEqual(parseOrderReference(`https://yoomoney.ru/checkout?orderId=${paymentId}`), { kind: "payment", id: paymentId });
+  assert.deepEqual(parseOrderReference(`payment:${paymentId}`), { kind: "payment", id: paymentId });
   for (const input of ["", "123", "https://evil.test/" + dealId, `https://p2pobmen.com.evil.test/${dealId}`,
-    `http://p2pobmen.com/${dealId}`, `https://p2pobmen.com/${dealId}?other=${otherId}`, "x".repeat(1201)]) {
+    `http://p2pobmen.com/${dealId}`, `https://p2pobmen.com/${dealId}?other=${otherId}`, `payment:${paymentId}/../${otherId}`, "payment:123", "x".repeat(1201)]) {
     await assert.rejects(findExistingOrderPayment(input));
   }
   assert.equal(calls.length, 0);
@@ -228,4 +229,42 @@ test("a personal reference continues to resolve its own deal when several deals 
   const result = await resolvePaymentEntry(dealId);
   assert.equal(result.state, "ready");
   assert.equal(calls.some(call => call.body?.operationName === "DealsSallerListLoad"), false);
+});
+
+test("per-payment references bypass shared selection and payment-list limits for simultaneous buyers", async () => {
+  const secondId = "12345678-1234-1234-1234-012345678901";
+  scenario.deals[otherId] = deal(otherId, "1800.25");
+  scenario.payments.push({ ...payment(otherId, "1800.25"), id: secondId,
+    confirmation: { confirmation_url: `https://yoomoney.ru/checkout?orderId=${secondId}` } });
+  scenario.list = () => { throw new Error("Personal links must not scan all shop payments"); };
+  const read = id => activePayment(new Request(`https://web.curvedlines.ru/api/pay/active?ref=payment:${id}`));
+  const responses = await Promise.all([read(paymentId), read(secondId)]);
+  assert.deepEqual(responses.map(response => response.status), [200, 200]);
+  assert.deepEqual((await Promise.all(responses.map(response => response.json()))).map(result => result.confirmationUrl),
+    scenario.payments.map(payment => payment.confirmation.confirmation_url));
+  assert.equal(calls.some(call => call.body?.operationName === "DealsSallerListLoad"), false);
+  assert.equal(calls.some(call => call.url.includes("/payments?")), false);
+
+  scenario.payments[0].status = "succeeded";
+  scenario.payments[0].paid = true;
+  assert.equal((await (await read(paymentId)).json()).state, "blocked");
+  const second = await (await read(secondId)).json();
+  assert.equal(second.state, "ready");
+  assert.equal(second.confirmationUrl, scenario.payments[1].confirmation.confirmation_url);
+});
+
+test("a direct payment ID still verifies provider identity, seller deal, amount, currency and chat", async () => {
+  const original = payment();
+  for (const invalid of [
+    { ...original, id: otherId },
+    { ...original, metadata: { ...original.metadata, source: "another-source" } },
+    { ...original, amount: { value: "1.00", currency: "RUB" } },
+    { ...original, amount: { value: "1200.00", currency: "USD" } },
+    { ...original, metadata: { ...original.metadata, chat_id: otherId } },
+  ]) {
+    scenario.payments = [invalid];
+    const response = await activePayment(new Request(`https://web.curvedlines.ru/api/pay/active?ref=payment:${paymentId}`));
+    assert.ok(response.status >= 400);
+    assert.equal((await response.json()).confirmationUrl, undefined);
+  }
 });
