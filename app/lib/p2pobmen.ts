@@ -30,27 +30,15 @@ function requireId(id: string) {
   if (!uuidPattern.test(id)) throw new P2pError("Некорректный ID p2pobmen", 400);
 }
 
-export type ChatAttachment = { name: string; contentType: "application/pdf"; bytes: Uint8Array };
-type ChatFiles = { edges?: { node?: { url?: string; mediaData?: { fileNameSource?: string; mimeType?: string } } }[] };
-
-async function graphql<T>(operationName: string, query: string, variables: Record<string, unknown>, token?: string, attachment?: ChatAttachment): Promise<T> {
+async function graphql<T>(operationName: string, query: string, variables: Record<string, unknown>, token?: string): Promise<T> {
   // Use the same operation routes and JWT scheme as the published p2pobmen web client.
   const operationPath = operationName.replace(/(.)?([A-Z])/g, (_, prefix: string, letter: string) => `${prefix ? `${prefix}-` : ""}${letter.toLowerCase()}`);
   let response: Response;
-  const operation = { operationName, query, variables };
-  let body: string | FormData = JSON.stringify(operation);
-  if (attachment) {
-    const form = new FormData();
-    form.append("operations", JSON.stringify(operation));
-    form.append("map", JSON.stringify({ "1": ["variables.input.files.0"] }));
-    form.append("1", new Blob([Buffer.from(attachment.bytes)], { type: attachment.contentType }), attachment.name);
-    body = form;
-  }
   try {
     response = await fetch(`https://p2pobmen.com/api/app/${operationPath}`, {
       method: "POST", cache: "no-store", redirect: "error",
-      headers: { ...(attachment ? {} : { "Content-Type": "application/json" }), ...(token ? { Authorization: `JWT ${token}` } : {}) },
-      body, signal: AbortSignal.timeout(8_000),
+      headers: { "Content-Type": "application/json", ...(token ? { Authorization: `JWT ${token}` } : {}) },
+      body: JSON.stringify({ operationName, query, variables }), signal: AbortSignal.timeout(8_000),
     });
   } catch { throw new P2pError("p2pobmen не ответил"); }
   if (!response.ok) throw new P2pError("Ошибка HTTP API p2pobmen");
@@ -182,40 +170,32 @@ export async function confirmPaymentRecieve(id: string): Promise<DealNode | null
   return result;
 }
 
-export async function sendChatMessage(chatId: string, message: string, attachment?: ChatAttachment): Promise<void> {
+export async function sendChatMessage(chatId: string, message: string): Promise<void> {
   requireId(chatId);
   const { token } = await session();
-  const data = await graphql<{ chat?: { createChatMessage?: { id?: string; files?: ChatFiles } } }>("ChatCreateMessage", `mutation ChatCreateMessage($input: ChatMessageCreateInput) {
-    chat { createChatMessage(input: $input) { id files { edges { node { url mediaData { fileNameSource mimeType } } } } } }
-  }`, { input: { chatId, message, ...(attachment ? { files: [null] } : {}) } }, token, attachment);
-  const result = data.chat?.createChatMessage;
-  if (!result?.id || (attachment && !hasAttachment(result.files, attachment.name))) throw new P2pError("Не удалось отправить сообщение со счётом p2pobmen");
+  const data = await graphql<{ chat?: { createChatMessage?: { id?: string } } }>("ChatCreateMessage", `mutation ChatCreateMessage($input: ChatMessageCreateInput) {
+    chat { createChatMessage(input: $input) { id } }
+  }`, { input: { chatId, message } }, token);
+  if (!data.chat?.createChatMessage?.id) throw new P2pError("Не удалось отправить сообщение p2pobmen");
 }
 
 export function p2pError(error: unknown) {
   return { status: error instanceof P2pError ? error.status : 500, message: error instanceof P2pError ? error.message : "Ошибка обработки сделки p2pobmen" };
 }
 
-function hasAttachment(files: ChatFiles | undefined, name: string) {
-  return files?.edges?.some(({ node }) => {
-    if (node?.mediaData?.fileNameSource !== name || node.mediaData.mimeType !== "application/pdf") return false;
-    try { return new URL(node.url || "").protocol === "https:"; } catch { return false; }
-  }) === true;
-}
-
-export async function hasSellerChatMessage(chatId: string, message: string, attachmentName?: string): Promise<boolean> {
+export async function hasSellerChatMessage(chatId: string, message: string): Promise<boolean> {
   requireId(chatId);
   const { token, userId } = await session();
   // Only the seller's own undeleted message acknowledges link delivery.
   const data = await graphql<{ chat?: { getChat?: { chatMessages?: {
-    edges?: { node: { message?: string; isDeleted?: boolean; isSystem?: boolean; user?: { guid?: string }; files?: ChatFiles } }[];
+    edges?: { node: { message?: string; isDeleted?: boolean; isSystem?: boolean; user?: { guid?: string } } }[];
     pageInfo?: { hasNextPage?: boolean; hasPreviousPage?: boolean };
   } } | null } }>("ChatLoad",
-    "query ChatLoad($id: UUID!) { chat { getChat(id: $id) { chatMessages { edges { node { message isDeleted isSystem user { guid } files { edges { node { url mediaData { fileNameSource mimeType } } } } } } pageInfo { hasNextPage hasPreviousPage } } } } }",
+    "query ChatLoad($id: UUID!) { chat { getChat(id: $id) { chatMessages { edges { node { message isDeleted isSystem user { guid } } } pageInfo { hasNextPage hasPreviousPage } } } } }",
     { id: chatId }, token);
   const messages = data.chat?.getChat?.chatMessages;
   if (!Array.isArray(messages?.edges)) throw new P2pError("Не удалось проверить доставку ссылки в чат");
-  if (messages.edges.some(({ node }) => node?.user?.guid === userId && node.isDeleted === false && node.isSystem === false && node.message === message && (!attachmentName || hasAttachment(node.files, attachmentName)))) return true;
+  if (messages.edges.some(({ node }) => node?.user?.guid === userId && node.isDeleted === false && node.isSystem === false && node.message === message)) return true;
   if (messages.pageInfo?.hasNextPage !== false || messages.pageInfo?.hasPreviousPage !== false) throw new P2pError("История чата неполная: требуется проверка доставки ссылки", 409);
   return false;
 }
