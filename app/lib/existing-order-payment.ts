@@ -27,6 +27,8 @@ export type PaymentEntryResolution = {
 export function parseOrderReference(input: string): Reference {
   const value = input.trim();
   if (!value || value.length > 1200) throw new PaymentError("Вставьте ссылку на вашу заявку или её полный ID.");
+  const directPayment = /^payment:([a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})$/i.exec(value);
+  if (directPayment) return { kind: "payment", id: directPayment[1].toLowerCase() };
   const bare = value.replace(/^p2p-/i, "");
   if (uuid.test(bare)) return { kind: "deal", id: bare.toLowerCase() };
   let url: URL;

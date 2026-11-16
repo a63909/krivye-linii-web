@@ -17,6 +17,7 @@ const { deferred } = await import("./next-server.mjs");
 const { dealAmount, createPaymentForDeal } = await import("../app/lib/p2pobmen-payments.ts");
 const { verifiedPayment } = await import("../app/lib/yookassa.ts");
 const { beginLogin, completeLogin } = await import("../app/lib/p2pobmen.ts");
+const { GET: activePayment } = await import("../app/api/pay/active/route.ts");
 
 const dealId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 const chatId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
@@ -61,9 +62,12 @@ beforeEach(() => {
         return Response.json(scenario.listPages?.[cursor] || { items: scenario.listItems || scenario.payments });
       }
       if (options?.method === "POST") {
-        if (!scenario.payments.some(payment => payment.id === scenario.payment.id)) scenario.payments.push(structuredClone(scenario.payment));
+        const payment = scenario.paymentsByDeal?.[body.metadata.deal_id] || scenario.payment;
+        if (!scenario.payments.some(item => item.id === payment.id)) scenario.payments.push(structuredClone(payment));
         if (scenario.providerResponseLost) throw new Error("fixture response lost");
+        return Response.json(payment);
       }
+      if (scenario.paymentsByDeal) return Response.json(Object.values(scenario.paymentsByDeal).find(payment => String(url).endsWith("/" + payment.id)));
       return Response.json(scenario.payment);
     }
     assert.match(String(url), /^https:\/\/p2pobmen\.com\/api\/app\//);
@@ -84,21 +88,25 @@ beforeEach(() => {
       }
       case "SellerDealAccept": {
         if (scenario.acceptSkipped) return Response.json({ data: { exchange: { deal: { acceptDeal: { result: { __typename: "ValidateAcceptDealNode" } } } } } });
-        scenario.deal.state = "ACCEPTED";
-        return Response.json({ data: { exchange: { deal: { acceptDeal: { result: { ...scenario.deal, __typename: "DealNode" } } } } } });
+        const deal = (scenario.deals || [scenario.deal]).find(item => item.id === body.variables.dealId);
+        assert.ok(deal);
+        deal.state = "ACCEPTED";
+        return Response.json({ data: { exchange: { deal: { acceptDeal: { result: { ...deal, __typename: "DealNode" } } } } } });
       }
       case "ChatCreateMessage": {
         if (scenario.chatFails) throw new Error("network failure");
-        scenario.chatMessages.push({ message: body.variables.input.message, user: { guid: userId }, isDeleted: false, isSystem: false });
+        scenario.chatMessages.push({ chatId: body.variables.input.chatId, message: body.variables.input.message, user: { guid: userId }, isDeleted: false, isSystem: false });
         if (scenario.chatResponseLost) throw new Error("fixture response lost");
         return Response.json({ data: { chat: { createChatMessage: { id: "message-1" } } } });
       }
       case "ChatLoad": return Response.json({ data: { chat: { getChat: { chatMessages: {
-        edges: scenario.chatMessages.map(node => ({ node })), pageInfo: { hasNextPage: scenario.incompleteChat || false, hasPreviousPage: false }
+        edges: scenario.chatMessages.filter(node => !node.chatId || node.chatId === body.variables.id).map(node => ({ node })), pageInfo: { hasNextPage: scenario.incompleteChat || false, hasPreviousPage: false }
       } } } } });
       case "P2pGetDeal": {
-        assert.deepEqual(body.variables.filter, { id: dealId, userIdSeller: userId, isDeleted: false });
-        return Response.json({ data: { exchange: { deal: { getDeal: scenario.missingDeal ? null : scenario.latestDeal || scenario.deal } } } });
+        const id = body.variables.filter.id;
+        assert.deepEqual(body.variables.filter, { id, userIdSeller: userId, isDeleted: false });
+        const deal = (scenario.deals || [scenario.deal]).find(item => item.id === id);
+        return Response.json({ data: { exchange: { deal: { getDeal: scenario.missingDeal ? null : scenario.latestDeal || deal || null } } } });
       }
       case "PaidSellerDealAccept": {
         if (scenario.confirmFails) return Response.json({ errors: [{ message: "private error" }] });
@@ -131,7 +139,7 @@ test("manual and cron authorization are checked before any external request", as
   assert.equal((await cronDeals(request("GET", "test-cron"))).status, 200);
 });
 
-test("NEW seller deal is accepted, billed for exact RUB amount, and points the buyer to the link under the QR", async () => {
+test("NEW seller deal is accepted, billed for exact RUB amount, and receives its own short payment link", async () => {
   const response = await processDeals(request());
   assert.equal(response.status, 200);
   const result = await response.json();
@@ -146,12 +154,64 @@ test("NEW seller deal is accepted, billed for exact RUB amount, and points the b
   const chat = mutations("ChatCreateMessage")[0];
   assert.equal(chat.body.variables.input.chatId, chatId);
   assert.match(chat.body.variables.input.message, /920\.01 ₽/);
-  assert.match(chat.body.variables.input.message, /нажмите ссылку под QR-кодом/);
-  assert.match(chat.body.variables.input.message, /«Данные получателя»/);
-  assert.doesNotMatch(chat.body.variables.input.message, /https?:\/\//);
+  assert.ok(chat.body.variables.input.message.includes(`https://web.curvedlines.ru/pay/sbp/${paymentId}`));
+  assert.doesNotMatch(chat.body.variables.input.message, /https:\/\/yoomoney\.ru\//);
+  assert.doesNotMatch(chat.body.variables.input.message, /ссылку под QR-кодом/);
   assert.equal(result.results[0].payUrl, scenario.payment.confirmation.confirmation_url);
+  assert.equal(result.results[0].paymentLink, `https://web.curvedlines.ru/pay/sbp/${paymentId}`);
   assert.ok(calls.indexOf(mutations("SellerDealAccept")[0]) < calls.indexOf(provider));
   assert.ok(calls.indexOf(provider) < calls.indexOf(chat));
+});
+
+test("two new buyers get independent payments and chat links while both payments remain pending", async () => {
+  const otherId = "dddddddd-dddd-dddd-dddd-dddddddddddd";
+  const otherChatId = "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee";
+  const otherPaymentId = "12345678-1234-1234-1234-012345678901";
+  const secondDeal = { ...scenario.deal, id: otherId, number: "124", amount: "1800.25", chat: { id: otherChatId } };
+  const secondPayment = { ...scenario.payment, id: otherPaymentId, amount: { value: "1800.25", currency: "RUB" },
+    metadata: { source: "p2pobmen", order_id: `p2p-${otherId}`, expected_amount: "1800.25", deal_id: otherId, chat_id: otherChatId },
+    confirmation: { confirmation_url: "https://yoomoney.ru/checkout/second" } };
+  scenario.deals = [scenario.deal, secondDeal];
+  scenario.paymentsByDeal = { [dealId]: scenario.payment, [otherId]: secondPayment };
+
+  const response = await processDeals(request());
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).processed, 2);
+  assert.equal(paymentPosts().length, 2);
+  assert.equal(new Set(paymentPosts().map(call => call.options.headers["Idempotence-Key"])).size, 2);
+  const messages = mutations("ChatCreateMessage").map(call => call.body.variables.input);
+  assert.equal(messages.length, 2);
+  assert.equal(messages[0].chatId, chatId);
+  assert.ok(messages[0].message.includes(`/pay/sbp/${paymentId}`));
+  assert.equal(messages[1].chatId, otherChatId);
+  assert.ok(messages[1].message.includes(`/pay/sbp/${otherPaymentId}`));
+  assert.ok(!messages[0].message.includes(otherPaymentId));
+  assert.ok(!messages[1].message.includes(paymentId));
+
+  const open = id => activePayment(new Request(`https://web.curvedlines.ru/api/pay/active?ref=payment:${id}`));
+  const payments = await Promise.all([open(paymentId), open(otherPaymentId)]);
+  assert.deepEqual(payments.map(item => item.status), [200, 200]);
+  assert.deepEqual((await Promise.all(payments.map(item => item.json()))).map(item => item.confirmationUrl),
+    [scenario.payment.confirmation.confirmation_url, secondPayment.confirmation.confirmation_url]);
+  assert.equal(scenario.payment.status, "pending");
+  assert.equal(secondPayment.status, "pending");
+  assert.equal(mutations("PaidSellerDealAccept").length, 0);
+  assert.equal((await processDeals(request())).status, 200);
+  assert.equal(paymentPosts().length, 2);
+  assert.equal(mutations("ChatCreateMessage").length, 2);
+});
+
+test("a pending deal with the old generic QR instruction receives its personal link once without another payment", async () => {
+  scenario.deal.state = "ACCEPTED";
+  scenario.payments = [structuredClone(scenario.payment)];
+  scenario.chatMessages = [{ chatId, user: { guid: userId }, isDeleted: false, isSystem: false,
+    message: "💳 Оплата по сделке #123\nСумма: 920.01 ₽\n\nДля оплаты нажмите ссылку под QR-кодом в разделе «Данные получателя». Выберите банк — сумма уже указана.\n\nПосле успешной оплаты сделка будет подтверждена автоматически." }];
+  assert.equal((await processDeals(request())).status, 200);
+  assert.ok(scenario.chatMessages[1].message.includes(`/pay/sbp/${paymentId}`));
+  assert.equal((await processDeals(request())).status, 200);
+  assert.equal(mutations("ChatCreateMessage").length, 1);
+  assert.equal(paymentPosts().length, 0);
+  assert.equal(mutations("SellerDealAccept").length, 0);
 });
 
 test("external cron gets a quick acknowledgment and work runs after the response", async () => {

@@ -1,6 +1,6 @@
 import { validateDeal } from "./p2pobmen-payments";
 import { type DealNode } from "./p2pobmen";
-import { PaymentError, providerRequest, type Payment } from "./yookassa";
+import { PaymentError, providerRequest, siteOrigin, type Payment } from "./yookassa";
 
 export class RunDeferred extends Error {}
 
@@ -45,6 +45,13 @@ export function dealPaymentUrl(payment: Payment) {
     throw new PaymentError("Некорректная ссылка оплаты", 409);
   }
   return url.toString();
+}
+
+export function personalPaymentUrl(payment: Payment) {
+  if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(payment.id)) {
+    throw new PaymentError("Некорректный идентификатор платежа", 409);
+  }
+  return new URL(`/pay/sbp/${payment.id}`, siteOrigin()).toString();
 }
 
 export async function findRecoverablePayment(deal: DealNode, deadline: number): Promise<Payment | null> {
