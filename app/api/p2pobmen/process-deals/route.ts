@@ -4,7 +4,6 @@ import { requireProcessAuth } from "../../../lib/p2pobmen-auth";
 import { createPaymentForDeal, validateDeal } from "../../../lib/p2pobmen-payments";
 import { dealPaymentUrl, findRecoverablePayment, personalPaymentUrl, requireRecentDeal, requireRunTime, RunDeferred, validateDealPayment } from "../../../lib/p2pobmen-recovery";
 import { paymentError, requirePaymentConfiguration } from "../../../lib/yookassa";
-import { paymentBill, paymentBillName } from "../../../lib/payment-bill";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -58,23 +57,20 @@ async function processDeals(deadline: number, deals: DealNode[]) {
       }
       const url = dealPaymentUrl(payment);
       const paymentLink = personalPaymentUrl(payment);
-      const billName = paymentBillName(deal);
       const message = "💳 Оплата по сделке #" + (deal.number || deal.id) + "\nСумма: " + amount + " ₽\n\n" +
-        "Откройте прикреплённый файл «" + billName + "» и нажмите в нём кнопку «ОПЛАТИТЬ ЧЕРЕЗ СБП». Выберите банк — сумма уже указана.\n\n" +
-        "Запасная ссылка: скопируйте и откройте её в браузере:\n" + paymentLink + "\n\n" +
+        "Скопируйте ссылку ниже и откройте её в браузере:\n" + paymentLink + "\n\n" +
+        "Выберите банк — сумма уже указана. Ссылка относится только к вашей сделке.\n\n" +
         "После успешной оплаты сделка будет подтверждена автоматически.";
       if (recovery) {
         requireRunTime(deadline, 8_000);
         item.stage = "check_chat";
-        if (await hasSellerChatMessage(deal.chat!.id, message, billName)) {
+        if (await hasSellerChatMessage(deal.chat!.id, message)) {
           item.status = "already_sent"; results.push(item); continue;
         }
       }
       requireRunTime(deadline, 8_000);
-      item.stage = "create_bill";
-      const bill = await paymentBill(deal, payment);
       item.stage = "send_chat";
-      await sendChatMessage(deal.chat!.id, message, bill);
+      await sendChatMessage(deal.chat!.id, message);
       Object.assign(item, { status: recovery ? "recovered" : "ok", payUrl: url, paymentLink, amount });
     } catch (error) {
       if (error instanceof RunDeferred) {
