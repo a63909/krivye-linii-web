@@ -3,15 +3,8 @@
 import { useEffect, useState } from "react";
 import type { PaymentEntryResolution } from "../lib/existing-order-payment";
 import styles from "./payment.module.css";
-
-function safePaymentUrl(value: unknown) {
-  if (typeof value !== "string") return undefined;
-  try {
-    const url = new URL(value);
-    if (url.protocol === "https:" && !url.username && !url.password && !url.port && ["yoomoney.ru", "yookassa.ru", "qr.nspk.ru"].includes(url.hostname)) return url.toString();
-  } catch { /* An invalid response must never navigate to another website. */ }
-  return undefined;
-}
+import { safePaymentUrl } from "./payment-url";
+import PaymentChoices from "./payment-choices";
 
 export default function PaymentWaiting({ initial, reference }: { initial: PaymentEntryResolution; reference?: string }) {
   const [result, setResult] = useState(initial);
@@ -31,7 +24,7 @@ export default function PaymentWaiting({ initial, reference }: { initial: Paymen
         const response = await fetch(endpoint, { cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(30_000)]) });
         const next = await response.json() as PaymentEntryResolution;
         if (canceled) return;
-        if (!next || !["ready", "waiting", "blocked"].includes(next.state)) throw new Error("Invalid payment response");
+        if (!next || !["ready", "waiting", "blocked", "choose"].includes(next.state)) throw new Error("Invalid payment response");
         if (response.ok && next.state === "ready") {
           const url = safePaymentUrl(next.confirmationUrl);
           if (!url) throw new Error("Invalid payment URL");
@@ -51,6 +44,8 @@ export default function PaymentWaiting({ initial, reference }: { initial: Paymen
     timer = setTimeout(check, cycle ? 0 : 3_000);
     return () => { canceled = true; controller.abort(); if (timer) clearTimeout(timer); };
   }, [reference, cycle, initial.retryable]);
+
+  if (result.state === "choose") return <PaymentChoices initial={result} />;
 
   return <>
     <h1>{result.state === "blocked" ? "Оплата заявки" : "Готовим оплату"}</h1>

@@ -58,6 +58,8 @@ async function processDeals(deadline: number, deals: DealNode[]) {
       const url = dealPaymentUrl(payment);
       const paymentLink = personalPaymentUrl(payment);
       const message = "💳 Оплата по сделке #" + (deal.number || deal.id) + "\nСумма: " + amount + " ₽\n\n" +
+        "ЗАПОМНИТЕ НОМЕР ВАШЕЙ СДЕЛКИ: " + (deal.number || deal.id) + ".\n" +
+        "ЕСЛИ ПО ССЫЛКЕ ПОД QR-КОДОМ ОТКРЫЛСЯ СПИСОК, ВЫБЕРИТЕ ИМЕННО СВОЮ СДЕЛКУ № " + (deal.number || deal.id) + " И ПРОВЕРЬТЕ СУММУ " + amount + " ₽. НЕ ВЫБИРАЙТЕ ТОЛЬКО ПО СУММЕ.\n\n" +
         "Скопируйте ссылку ниже и откройте её в браузере:\n" + paymentLink + "\n\n" +
         "Выберите банк — сумма уже указана. Ссылка относится только к вашей сделке.\n\n" +
         "После успешной оплаты сделка будет подтверждена автоматически.";

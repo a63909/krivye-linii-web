@@ -1,5 +1,5 @@
-import { getMyDeal, getMyDeals } from "./p2pobmen";
-import { dealAmount } from "./p2pobmen-payments";
+import { getMyDeal, getMyDeals, getMyWaitingDealByNumber } from "./p2pobmen";
+import { dealAmount, validateDeal } from "./p2pobmen-payments";
 import { PaymentError, providerRequest, type Payment } from "./yookassa";
 
 const uuid = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i;
@@ -16,14 +16,21 @@ export type OrderPaymentView = {
 };
 
 export type PaymentEntryResolution = {
-  state: "ready" | "waiting" | "blocked";
+  state: "ready" | "waiting" | "blocked" | "choose";
   message: string;
   retryable: boolean;
   confirmationUrl?: string;
+  orderLabel?: string;
+  amount?: string;
+  choices?: PaymentChoice[];
 };
 
+export type PaymentChoice = { reference: string; orderLabel: string; amount: string; checkingPayment: boolean };
+export type SelectedOrderPayment = { reference: string; payment: OrderPaymentView };
+
 // An unpredictable deal UUID or an existing provider link is the access key.
-// Never search by an enumerable order number or select another visitor's deal.
+// Personal links still require an unpredictable reference. Number lookup is a
+// separate, explicit selection flow restricted to currently waiting seller deals.
 export function parseOrderReference(input: string): Reference {
   const value = input.trim();
   if (!value || value.length > 1200) throw new PaymentError("Вставьте ссылку на вашу заявку или её полный ID.");
@@ -142,18 +149,52 @@ export async function findExistingOrderPayment(input: string): Promise<OrderPaym
   return { ...view, state: "pending", confirmationUrl: confirmationUrl(payment), message: "Сумма получена из вашей заявки. Вводить её повторно не нужно." };
 }
 
-// A shared link has no buyer/deal identifier and works only for exactly one
-// accepted unpaid seller deal. Never choose the latest of several deals.
+export async function findSelectedOrderPayment(input: string): Promise<SelectedOrderPayment> {
+  const value = input.trim().replace(/^#\s*/, "");
+  if (!value || value.length > 80) throw new PaymentError("Укажите номер сделки или её полный ID.");
+  const fullId = value.replace(/^p2p-/i, "");
+  let reference: string;
+  if (uuid.test(fullId)) reference = fullId.toLowerCase();
+  else {
+    if (!/^D?\d{1,12}$/i.test(value)) throw new PaymentError("Введите номер вида D1097367 или полный ID сделки.");
+    const number = `D${value.replace(/^D/i, "")}`;
+    const deal = await getMyWaitingDealByNumber(number);
+    if (!deal) throw new PaymentError("Ожидающая сделка не найдена. Проверьте номер или откройте персональную ссылку из её чата.", 404);
+    reference = deal.id;
+  }
+  return { reference, payment: await findExistingOrderPayment(reference) };
+}
+
+async function paymentChoices(): Promise<PaymentEntryResolution> {
+  const deals = await getMyDeals(["ACCEPTED", "PAID"], 15);
+  const choices: PaymentChoice[] = [];
+  for (const deal of deals) {
+    if (!["ACCEPTED", "PAID"].includes(deal.state)) continue;
+    try {
+      const amount = validateDeal(deal);
+      choices.push({ reference: deal.id, orderLabel: deal.number || deal.id, amount, checkingPayment: deal.state === "PAID" });
+    } catch { /* Unsupported deals must not become selectable payment entries. */ }
+  }
+  return {
+    state: "choose", retryable: false, choices,
+    message: choices.length ? "Найдите свою сделку по номеру из чата площадки. Даже при одинаковых суммах номера сделок различаются." :
+      "Сейчас нет сделок, готовых к выбору. Проверьте номер или обновите список после принятия заявки.",
+  };
+}
+
+// A shared link has no buyer identifier. Multiple deals require explicit buyer
+// selection and confirmation; never choose the latest of several deals.
 // This path only reads; the existing processor remains responsible for billing.
-export async function resolvePaymentEntry(reference?: string): Promise<PaymentEntryResolution> {
+export async function resolvePaymentEntry(reference?: string, choose = false): Promise<PaymentEntryResolution> {
   let selected = reference;
   if (!selected) {
+    if (choose) return paymentChoices();
     const deals = await getMyDeals(["ACCEPTED", "PAID"], 2);
     if (!deals.length) {
       return { state: "waiting", message: "Ждём подготовки платежа по заявке. Страница обновится автоматически.", retryable: true };
     }
     if (deals.length !== 1) {
-      return { state: "blocked", message: "Одновременно ожидают оплаты несколько заявок. Откройте персональную платёжную ссылку из чата вашей сделки.", retryable: false };
+      return paymentChoices();
     }
     selected = deals[0].id;
   }
@@ -164,13 +205,13 @@ export async function resolvePaymentEntry(reference?: string): Promise<PaymentEn
     if (!reference) {
       const current = await getMyDeals(["ACCEPTED", "PAID"], 2);
       if (current.length !== 1 || current[0].id !== selected) {
-        return { state: "blocked", message: "Состав ожидающих заявок изменился. Откройте персональную платёжную ссылку из чата вашей сделки.", retryable: false };
+        return paymentChoices();
       }
       if (current[0].state !== "ACCEPTED") {
         return { state: "waiting", message: "Проверяем получение оплаты. Повторно платить пока не нужно.", retryable: true };
       }
     }
-    return { state: "ready", message: "Открываем выбор банка…", retryable: false, confirmationUrl: payment.confirmationUrl };
+    return { state: "ready", message: "Открываем выбор банка…", retryable: false, confirmationUrl: payment.confirmationUrl, orderLabel: payment.orderLabel, amount: payment.amount };
   }
   return { state: payment.state === "waiting" ? "waiting" : "blocked", message: payment.message, retryable: payment.state === "waiting" };
 }
