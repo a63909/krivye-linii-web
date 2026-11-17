@@ -91,13 +91,10 @@ export default function IntegrationsAutomationPage() {
         <div className={styles.heroCopy}>
           <p className={styles.eyebrow}><i />INTEGRATIONS / AUTOMATION / API</p>
           <h1>
-            Системы,
-            <br />которые работают
-            <br /><em>как единое целое.</em>
+            Интеграции и автоматизация <em>бизнес-процессов</em>
           </h1>
           <p className={styles.heroLead}>
-            Соединяем сервисы, данные и команды. Убираем двойной ввод,
-            ручные переносы и операции, которые можно доверить системе.
+            Интегрируем сайты, CRM и ERP: настраиваем передачу заявок, обмен данными и уведомления. Убираем двойной ввод и повторяющиеся ручные операции.
           </p>
           <div className={styles.heroActions}>
             <Link href="/#brief">Обсудить интеграцию <span>↗</span></Link>
