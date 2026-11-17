@@ -156,6 +156,8 @@ test("NEW seller deal is accepted, billed for exact RUB amount, and receives its
   assert.match(chat.body.variables.input.message, /920\.01 ₽/);
   assert.ok(chat.body.variables.input.message.includes(`https://web.curvedlines.ru/pay/sbp/${paymentId}`));
   assert.match(chat.body.variables.input.message, /Скопируйте ссылку ниже и откройте её в браузере/);
+  assert.match(chat.body.variables.input.message, /Для оплаты нажмите ссылку под QR-кодом/);
+  assert.match(chat.body.variables.input.message, /Запасная персональная ссылка/);
   assert.doesNotMatch(chat.body.variables.input.message, /Нажмите эту ссылку|PDF/);
   assert.doesNotMatch(chat.body.variables.input.message, /https:\/\/yoomoney\.ru\//);
   assert.match(chat.body.variables.input.message, /ЗАПОМНИТЕ НОМЕР ВАШЕЙ СДЕЛКИ: 123/);
