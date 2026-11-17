@@ -149,50 +149,6 @@ export async function getMyDeal(id: string): Promise<DealNode | null> {
   return result;
 }
 
-// Temporary, read-only investigation of payment-method references for the owner's
-// existing lot. This deliberately accepts no caller-controlled lot/deal filter.
-export async function inspectOwnPaymentMethodReferences() {
-  const lotId = "d2618eb1-2833-4b44-ae37-ad8cb64b376b";
-  const { token, userId } = await session();
-  type Method = { id: string };
-  type InspectionDeal = {
-    id: string; number: string | null; state: DealState;
-    lot: { id: string } | null; lotPaymentMethod: Method | null;
-  };
-  const data = await graphql<{ exchange?: {
-    lot?: { getLot?: { id: string; number: string | null; paymentMethods?: { edges?: { node: Method }[] } } | null };
-    deal?: { getDeals?: { edges?: { node: InspectionDeal }[]; pageInfo?: { hasNextPage?: boolean } } };
-  } }>("InspectOwnPaymentMethodReferences", `query InspectOwnPaymentMethodReferences($lot: LotFilter, $deals: DealFilter) {
-    exchange {
-      lot { getLot(filter: $lot) { id number paymentMethods { edges { node { id } } } } }
-      deal { getDeals(filter: $deals, first: 5) {
-        edges { node { id number state lot { id } lotPaymentMethod { id } } }
-        pageInfo { hasNextPage }
-      } }
-    }
-  }`, { lot: { id: lotId }, deals: { lotId, userIdSeller: userId, isDeleted: false } }, token);
-  const lot = data.exchange?.lot?.getLot;
-  const connection = data.exchange?.deal?.getDeals;
-  if (lot?.id !== lotId || !Array.isArray(lot.paymentMethods?.edges) || !Array.isArray(connection?.edges)) {
-    throw new P2pError("Не удалось проверить ссылки на реквизиты");
-  }
-  const currentMethodIds = lot.paymentMethods.edges.map(({ node }) => node.id);
-  const deals = connection.edges.map(({ node }) => {
-    if (node.lot?.id !== lotId) throw new P2pError("Сделка не относится к проверяемому объявлению");
-    return {
-      number: node.number, state: node.state, paymentMethodId: node.lotPaymentMethod?.id || null,
-      referencesCurrentLotMethod: !!node.lotPaymentMethod && currentMethodIds.includes(node.lotPaymentMethod.id),
-    };
-  });
-  const uniqueMethodIds = new Set(deals.map(deal => deal.paymentMethodId).filter(Boolean));
-  return {
-    lotNumber: lot.number, currentMethodIds, deals, sampledDeals: deals.length,
-    distinctDealMethodCount: uniqueMethodIds.size,
-    allSampledDealsShareMethod: deals.length < 2 ? null : deals.every(deal => !!deal.paymentMethodId) && uniqueMethodIds.size === 1,
-    hasMoreDeals: connection.pageInfo?.hasNextPage ?? null,
-  };
-}
-
 export async function acceptDeal(id: string): Promise<DealNode | null> {
   requireId(id);
   const { token } = await session();
