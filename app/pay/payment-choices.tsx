@@ -33,7 +33,7 @@ export default function PaymentChoices({ initial }: { initial: PaymentEntryResol
     <ul className={styles.choices} aria-label="Ожидающие сделки">
       {(result.choices || []).map(choice => <li key={choice.reference}>
         <Link className={styles.choice} href={`/pay/choose?order=${encodeURIComponent(choice.reference)}`} prefetch={false}>
-          <strong>Сделка № {choice.orderLabel}</strong>
+          <strong>Сделка № <span className={styles.dealNumber}>{choice.orderLabel}</span></strong>
           <span className={styles.choiceAmount}>{Number(choice.amount).toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</span>
           <small>ID сделки: {choice.reference}</small>
           <span className={styles.choiceAction}>{choice.checkingPayment ? "Проверить статус оплаты" : "Выбрать и проверить →"}</span>

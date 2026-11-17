@@ -35,7 +35,7 @@ export default function PaymentSelection({ selection, error }: { selection?: Sel
   return <>
     <h1>{selection ? "Проверьте свою сделку" : "Найдите свою сделку"}</h1>
     {selection && <>
-      <p className={styles.orderNumber}>Сделка № {selection.payment.orderLabel}</p>
+      <p className={styles.orderNumber}>Сделка № <span className={styles.dealNumber}>{selection.payment.orderLabel}</span></p>
       <p className={styles.amount}>{Number(selection.payment.amount).toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽</p>
       <p className={styles.hint}>ID сделки: {selection.reference}</p>
       <p className={styles.warning}>УБЕДИТЕСЬ, ЧТО ЭТО ИМЕННО ВАША СДЕЛКА. СВЕРЬТЕ НОМЕР И СУММУ С ЧАТОМ ПЛОЩАДКИ.</p>
@@ -44,7 +44,7 @@ export default function PaymentSelection({ selection, error }: { selection?: Sel
     {selection && available && <form onSubmit={pay} className={styles.lookup}>
       <label className={styles.confirmation}>
         <input type="checkbox" required checked={confirmed} onChange={event => setConfirmed(event.target.checked)} disabled={busy} />
-        <span>Я сверил номер: это моя сделка № {selection.payment.orderLabel} на {Number(selection.payment.amount).toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽.</span>
+        <span>Я сверил номер: это моя сделка № <strong className={styles.dealNumber}>{selection.payment.orderLabel}</strong> на {Number(selection.payment.amount).toLocaleString("ru-RU", { minimumFractionDigits: 2 })} ₽.</span>
       </label>
       <button className={styles.button} type="submit" disabled={!confirmed || busy}>{busy ? "Проверяем платёж…" : "Подтвердить и оплатить через СБП"}</button>
     </form>}
