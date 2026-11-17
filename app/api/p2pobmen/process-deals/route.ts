@@ -1,9 +1,10 @@
 import { after, NextResponse } from "next/server";
-import { acceptDeal, getMyDeal, getMyDeals, hasSellerChatMessage, p2pError, requireP2pSession, sendChatMessage, type DealNode } from "../../../lib/p2pobmen";
+import { acceptDeal, getMyDeal, getMyDeals, sellerChatMessageMatches, p2pError, requireP2pSession, sendChatMessage, type DealNode } from "../../../lib/p2pobmen";
 import { requireProcessAuth } from "../../../lib/p2pobmen-auth";
 import { createPaymentForDeal, validateDeal } from "../../../lib/p2pobmen-payments";
 import { dealPaymentUrl, findRecoverablePayment, personalPaymentUrl, requireRecentDeal, requireRunTime, RunDeferred, validateDealPayment } from "../../../lib/p2pobmen-recovery";
 import { paymentError, requirePaymentConfiguration } from "../../../lib/yookassa";
+import { paymentChatMessages } from "../../../lib/p2pobmen-chat";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -57,23 +58,24 @@ async function processDeals(deadline: number, deals: DealNode[]) {
       }
       const url = dealPaymentUrl(payment);
       const paymentLink = personalPaymentUrl(payment);
-      const message = "💳 Оплата по сделке #" + (deal.number || deal.id) + "\nСумма: " + amount + " ₽\n\n" +
-        "Для оплаты нажмите ссылку под QR-кодом в разделе «Данные получателя».\n\n" +
-        "🔴 ЗАПОМНИТЕ НОМЕР ВАШЕЙ СДЕЛКИ: " + (deal.number || deal.id) + " 🔴\n" +
-        "ЕСЛИ ПО ССЫЛКЕ ПОД QR-КОДОМ ОТКРЫЛСЯ СПИСОК, ВЫБЕРИТЕ ИМЕННО СВОЮ СДЕЛКУ № " + (deal.number || deal.id) + " И ПРОВЕРЬТЕ СУММУ " + amount + " ₽. НЕ ВЫБИРАЙТЕ ТОЛЬКО ПО СУММЕ.\n\n" +
-        "Запасная персональная ссылка. Скопируйте ссылку ниже и откройте её в браузере:\n" + paymentLink + "\n\n" +
-        "Выберите банк — сумма уже указана. Ссылка относится только к вашей сделке.\n\n" +
-        "После успешной оплаты сделка будет подтверждена автоматически.";
+      const messages = paymentChatMessages(deal, amount, paymentLink);
+      let delivered = messages.map(() => false);
       if (recovery) {
         requireRunTime(deadline, 8_000);
         item.stage = "check_chat";
-        if (await hasSellerChatMessage(deal.chat!.id, message)) {
+        delivered = await sellerChatMessageMatches(deal.chat!.id, messages);
+        if (delivered.every(Boolean)) {
           item.status = "already_sent"; results.push(item); continue;
         }
       }
-      requireRunTime(deadline, 8_000);
-      item.stage = "send_chat";
-      await sendChatMessage(deal.chat!.id, message);
+      for (const [index, message] of messages.entries()) {
+        if (delivered[index]) continue;
+        requireRunTime(deadline, 8_000);
+        item.stage = "send_chat";
+        // Sequential sends preserve the visible block order. A partial failure
+        // resumes only missing seller messages on the next scheduled run.
+        await sendChatMessage(deal.chat!.id, message);
+      }
       Object.assign(item, { status: recovery ? "recovered" : "ok", payUrl: url, paymentLink, amount });
     } catch (error) {
       if (error instanceof RunDeferred) {

@@ -94,9 +94,11 @@ beforeEach(() => {
         return Response.json({ data: { exchange: { deal: { acceptDeal: { result: { ...deal, __typename: "DealNode" } } } } } });
       }
       case "ChatCreateMessage": {
-        if (scenario.chatFails) throw new Error("network failure");
+        const attempt = calls.filter(call => call.body?.operationName === "ChatCreateMessage").length;
+        if (scenario.chatFails || scenario.chatFailOn === attempt) throw new Error("network failure");
         scenario.chatMessages.push({ chatId: body.variables.input.chatId, message: body.variables.input.message, user: { guid: userId }, isDeleted: false, isSystem: false });
-        if (scenario.chatResponseLost) throw new Error("fixture response lost");
+        scenario.afterChatSend?.();
+        if (scenario.chatResponseLost || scenario.chatResponseLostOn === attempt) throw new Error("fixture response lost");
         return Response.json({ data: { chat: { createChatMessage: { id: "message-1" } } } });
       }
       case "ChatLoad": return Response.json({ data: { chat: { getChat: { chatMessages: {
@@ -152,17 +154,20 @@ test("NEW seller deal is accepted, billed for exact RUB amount, and receives its
   assert.deepEqual(provider.body.metadata, scenario.payment.metadata);
   assert.equal(provider.body.metadata.order_id, `p2p-${dealId}`);
   const chat = mutations("ChatCreateMessage")[0];
+  const chatParts = mutations("ChatCreateMessage").map(call => call.body.variables.input.message);
+  const chatText = chatParts.join("\n\n");
+  assert.equal(chatParts.length, 3);
   assert.equal(chat.body.variables.input.chatId, chatId);
-  assert.match(chat.body.variables.input.message, /920\.01 ₽/);
-  assert.ok(chat.body.variables.input.message.includes(`https://web.curvedlines.ru/pay/sbp/${paymentId}`));
-  assert.match(chat.body.variables.input.message, /Скопируйте ссылку ниже и откройте её в браузере/);
-  assert.match(chat.body.variables.input.message, /Для оплаты нажмите ссылку под QR-кодом/);
-  assert.match(chat.body.variables.input.message, /Запасная персональная ссылка/);
-  assert.doesNotMatch(chat.body.variables.input.message, /Нажмите эту ссылку|PDF/);
-  assert.doesNotMatch(chat.body.variables.input.message, /https:\/\/yoomoney\.ru\//);
-  assert.match(chat.body.variables.input.message, /ЗАПОМНИТЕ НОМЕР ВАШЕЙ СДЕЛКИ: 123/);
-  assert.match(chat.body.variables.input.message, /ВЫБЕРИТЕ ИМЕННО СВОЮ СДЕЛКУ № 123 И ПРОВЕРЬТЕ СУММУ 920\.01 ₽/);
-  assert.match(chat.body.variables.input.message, /НЕ ВЫБИРАЙТЕ ТОЛЬКО ПО СУММЕ/);
+  assert.match(chatParts[0], /920\.01 ₽/);
+  assert.match(chatParts[0], /ЗАПОМНИТЕ НОМЕР ВАШЕЙ СДЕЛКИ: 123/);
+  assert.doesNotMatch(chatParts[0], /Для оплаты|https:/);
+  assert.equal(chatParts[2], `https://web.curvedlines.ru/pay/sbp/${paymentId}`);
+  assert.match(chatParts[1], /Скопируйте ссылку ниже и откройте её в браузере/);
+  assert.match(chatParts[1], /Для оплаты нажмите ссылку под QR-кодом/);
+  assert.match(chatParts[1], /Запасная персональная ссылка/);
+  assert.doesNotMatch(chatText, /Нажмите эту ссылку|PDF|https:\/\/yoomoney\.ru\//);
+  assert.match(chatParts[1], /ВЫБЕРИТЕ ИМЕННО СВОЮ СДЕЛКУ № 123 И ПРОВЕРЬТЕ СУММУ 920\.01 ₽/);
+  assert.match(chatParts[1], /НЕ ВЫБИРАЙТЕ ТОЛЬКО ПО СУММЕ/);
   assert.equal(result.results[0].payUrl, scenario.payment.confirmation.confirmation_url);
   assert.equal(result.results[0].paymentLink, `https://web.curvedlines.ru/pay/sbp/${paymentId}`);
   assert.ok(calls.indexOf(mutations("SellerDealAccept")[0]) < calls.indexOf(provider));
@@ -186,13 +191,11 @@ test("two new buyers get independent payments and chat links while both payments
   assert.equal(paymentPosts().length, 2);
   assert.equal(new Set(paymentPosts().map(call => call.options.headers["Idempotence-Key"])).size, 2);
   const messages = mutations("ChatCreateMessage").map(call => call.body.variables.input);
-  assert.equal(messages.length, 2);
-  assert.equal(messages[0].chatId, chatId);
-  assert.ok(messages[0].message.includes(`/pay/sbp/${paymentId}`));
-  assert.equal(messages[1].chatId, otherChatId);
-  assert.ok(messages[1].message.includes(`/pay/sbp/${otherPaymentId}`));
-  assert.ok(!messages[0].message.includes(otherPaymentId));
-  assert.ok(!messages[1].message.includes(paymentId));
+  assert.equal(messages.length, 6);
+  assert.ok(messages.slice(0, 3).every(message => message.chatId === chatId && !message.message.includes(otherPaymentId)));
+  assert.ok(messages[2].message.includes(`/pay/sbp/${paymentId}`));
+  assert.ok(messages.slice(3).every(message => message.chatId === otherChatId && !message.message.includes(paymentId)));
+  assert.ok(messages[5].message.includes(`/pay/sbp/${otherPaymentId}`));
 
   const open = id => activePayment(new Request(`https://web.curvedlines.ru/api/pay/active?ref=payment:${id}`));
   const payments = await Promise.all([open(paymentId), open(otherPaymentId)]);
@@ -204,7 +207,7 @@ test("two new buyers get independent payments and chat links while both payments
   assert.equal(mutations("PaidSellerDealAccept").length, 0);
   assert.equal((await processDeals(request())).status, 200);
   assert.equal(paymentPosts().length, 2);
-  assert.equal(mutations("ChatCreateMessage").length, 2);
+  assert.equal(mutations("ChatCreateMessage").length, 6);
 });
 
 test("a pending deal with the old generic QR instruction receives its personal link once without another payment", async () => {
@@ -213,9 +216,9 @@ test("a pending deal with the old generic QR instruction receives its personal l
   scenario.chatMessages = [{ chatId, user: { guid: userId }, isDeleted: false, isSystem: false,
     message: "💳 Оплата по сделке #123\nСумма: 920.01 ₽\n\nДля оплаты нажмите ссылку под QR-кодом в разделе «Данные получателя». Выберите банк — сумма уже указана.\n\nПосле успешной оплаты сделка будет подтверждена автоматически." }];
   assert.equal((await processDeals(request())).status, 200);
-  assert.ok(scenario.chatMessages[1].message.includes(`/pay/sbp/${paymentId}`));
+  assert.ok(scenario.chatMessages.at(-1).message.includes(`/pay/sbp/${paymentId}`));
   assert.equal((await processDeals(request())).status, 200);
-  assert.equal(mutations("ChatCreateMessage").length, 1);
+  assert.equal(mutations("ChatCreateMessage").length, 3);
   assert.equal(paymentPosts().length, 0);
   assert.equal(mutations("SellerDealAccept").length, 0);
 });
@@ -232,7 +235,7 @@ test("external cron gets a quick acknowledgment and work runs after the response
   assert.equal(deferred.length, 1);
   await deferred.shift()();
   assert.equal(mutations("SellerDealAccept").length, 1);
-  assert.equal(mutations("ChatCreateMessage").length, 1);
+  assert.equal(mutations("ChatCreateMessage").length, 3);
 });
 
 test("readiness validates configuration and session without accepting or charging", async () => {
@@ -439,7 +442,7 @@ test("an 8-second initial listing no longer silently skips a NEW deal", async ()
     assert.equal((await response.json()).results[0].status, "ok");
     assert.equal(mutations("SellerDealAccept").length, 1);
     assert.equal(paymentPosts().length, 1);
-    assert.equal(mutations("ChatCreateMessage").length, 1);
+    assert.equal(mutations("ChatCreateMessage").length, 3);
   } finally { Date.now = now; }
 });
 
@@ -493,7 +496,7 @@ test("a billing failure after acceptance is resumed on the next run with the ide
   assert.equal(attempts.length, 2);
   assert.equal(attempts[0].options.headers["Idempotence-Key"], attempts[1].options.headers["Idempotence-Key"]);
   assert.deepEqual(attempts[0].body, attempts[1].body);
-  assert.equal(mutations("ChatCreateMessage").length, 1);
+  assert.equal(mutations("ChatCreateMessage").length, 3);
 });
 
 test("chat failure reuses the existing payment and subsequent runs do not spam the same seller link", async () => {
@@ -507,8 +510,8 @@ test("chat failure reuses the existing payment and subsequent runs do not spam t
   assert.equal((await repeated.json()).results[0].status, "already_sent");
   assert.equal(paymentPosts().length, 1);
   assert.equal(mutations("SellerDealAccept").length, 1);
-  assert.equal(mutations("ChatCreateMessage").length, 2); // failed delivery + successful retry
-  assert.equal(scenario.chatMessages.length, 1);
+  assert.equal(mutations("ChatCreateMessage").length, 4); // failed delivery + three blocks on retry
+  assert.equal(scenario.chatMessages.length, 3);
 });
 
 test("a lost billing response is recovered by GET without another creation request", async () => {
@@ -518,7 +521,7 @@ test("a lost billing response is recovered by GET without another creation reque
   scenario.providerResponseLost = false;
   assert.equal((await processDeals(request())).status, 200);
   assert.equal(paymentPosts().length, 1);
-  assert.equal(scenario.chatMessages.length, 1);
+  assert.equal(scenario.chatMessages.length, 3);
 });
 
 test("a lost chat acknowledgment does not send the already delivered message again", async () => {
@@ -527,8 +530,70 @@ test("a lost chat acknowledgment does not send the already delivered message aga
   assert.equal(scenario.chatMessages.length, 1);
   scenario.chatResponseLost = false;
   const response = await processDeals(request());
-  assert.equal((await response.json()).results[0].status, "already_sent");
-  assert.equal(mutations("ChatCreateMessage").length, 1);
+  assert.equal((await response.json()).results[0].status, "recovered");
+  assert.equal(scenario.chatMessages.length, 3);
+  assert.equal(mutations("ChatCreateMessage").length, 3);
+  assert.equal((await (await processDeals(request())).json()).results[0].status, "already_sent");
+  assert.equal(mutations("ChatCreateMessage").length, 3);
+  assert.equal(paymentPosts().length, 1);
+});
+
+test("a failure between chat blocks resumes only missing blocks in order", async () => {
+  scenario.chatFailOn = 2;
+  assert.equal((await processDeals(request())).status, 502);
+  assert.equal(scenario.chatMessages.length, 1);
+  const first = scenario.chatMessages[0].message;
+  scenario.chatFailOn = undefined;
+  assert.equal((await processDeals(request())).status, 200);
+  assert.equal(scenario.chatMessages.length, 3);
+  assert.equal(scenario.chatMessages.filter(message => message.message === first).length, 1);
+  assert.match(scenario.chatMessages[1].message, /Для оплаты нажмите ссылку под QR-кодом/);
+  assert.equal(scenario.chatMessages[2].message, `https://web.curvedlines.ru/pay/sbp/${paymentId}`);
+  assert.equal(mutations("ChatCreateMessage").length, 4);
+  assert.equal(paymentPosts().length, 1);
+  assert.equal((await (await processDeals(request())).json()).results[0].status, "already_sent");
+  assert.equal(mutations("ChatCreateMessage").length, 4);
+});
+
+test("a lost acknowledgment for the final block cannot duplicate any delivered block", async () => {
+  scenario.chatResponseLostOn = 3;
+  assert.equal((await processDeals(request())).status, 502);
+  assert.equal(scenario.chatMessages.length, 3);
+  scenario.chatResponseLostOn = undefined;
+  assert.equal((await (await processDeals(request())).json()).results[0].status, "already_sent");
+  assert.equal(mutations("ChatCreateMessage").length, 3);
+  assert.equal(paymentPosts().length, 1);
+});
+
+test("a partial chat delivery respects the run budget and resumes without another payment", async () => {
+  const now = Date.now, start = now();
+  let clock = start;
+  Date.now = () => clock;
+  scenario.afterChatSend = () => { clock += 48_000; };
+  try {
+    const response = await processDeals(request());
+    assert.equal(response.status, 503);
+    const result = await response.json();
+    assert.equal(result.remaining, 1);
+    assert.equal(result.results[0].status, "deferred");
+    assert.equal(scenario.chatMessages.length, 1);
+  } finally { Date.now = now; scenario.afterChatSend = undefined; }
+  assert.equal((await processDeals(request())).status, 200);
+  assert.equal(scenario.chatMessages.length, 3);
+  assert.equal(paymentPosts().length, 1);
+  assert.equal(mutations("SellerDealAccept").length, 1);
+});
+
+test("incomplete chat history cannot cause blind retransmission of a missing block", async () => {
+  assert.equal((await processDeals(request())).status, 200);
+  scenario.chatMessages.pop();
+  scenario.incompleteChat = true;
+  assert.equal((await processDeals(request())).status, 502);
+  assert.equal(mutations("ChatCreateMessage").length, 3);
+  scenario.incompleteChat = false;
+  assert.equal((await processDeals(request())).status, 200);
+  assert.equal(scenario.chatMessages.length, 3);
+  assert.equal(mutations("ChatCreateMessage").length, 4);
   assert.equal(paymentPosts().length, 1);
 });
 
@@ -557,7 +622,7 @@ test("an older accepted deal can reuse a verified existing payment, without crea
   scenario.payments = [structuredClone(scenario.payment)];
   assert.equal((await processDeals(request())).status, 200);
   assert.equal(paymentPosts().length, 0);
-  assert.equal(scenario.chatMessages.length, 1);
+  assert.equal(scenario.chatMessages.length, 3);
 });
 
 test("existing successful payment suppresses billing and chat; webhook confirmation remains separate", async () => {
@@ -621,11 +686,11 @@ test("expired, canceled and unsafe payment links never generate a second payment
 
 test("buyer text cannot impersonate delivery of a seller's payment link", async () => {
   assert.equal((await processDeals(request())).status, 200);
-  scenario.chatMessages[0].user.guid = "dddddddd-dddd-dddd-dddd-dddddddddddd";
+  scenario.chatMessages[2].user.guid = "dddddddd-dddd-dddd-dddd-dddddddddddd";
   const response = await processDeals(request());
   assert.equal((await response.json()).results[0].status, "recovered");
   assert.equal(paymentPosts().length, 1);
-  assert.equal(mutations("ChatCreateMessage").length, 2);
+  assert.equal(mutations("ChatCreateMessage").length, 4);
 });
 
 test("a state change after the scheduler snapshot suppresses payment recovery", async () => {

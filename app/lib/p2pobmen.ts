@@ -197,7 +197,7 @@ export function p2pError(error: unknown) {
   return { status: error instanceof P2pError ? error.status : 500, message: error instanceof P2pError ? error.message : "Ошибка обработки сделки p2pobmen" };
 }
 
-export async function hasSellerChatMessage(chatId: string, message: string): Promise<boolean> {
+export async function sellerChatMessageMatches(chatId: string, expected: readonly string[]): Promise<boolean[]> {
   requireId(chatId);
   const { token, userId } = await session();
   // Only the seller's own undeleted message acknowledges link delivery.
@@ -209,7 +209,12 @@ export async function hasSellerChatMessage(chatId: string, message: string): Pro
     { id: chatId }, token);
   const messages = data.chat?.getChat?.chatMessages;
   if (!Array.isArray(messages?.edges)) throw new P2pError("Не удалось проверить доставку ссылки в чат");
-  if (messages.edges.some(({ node }) => node?.user?.guid === userId && node.isDeleted === false && node.isSystem === false && node.message === message)) return true;
-  if (messages.pageInfo?.hasNextPage !== false || messages.pageInfo?.hasPreviousPage !== false) throw new P2pError("История чата неполная: требуется проверка доставки ссылки", 409);
-  return false;
+  const ownMessages = new Set(messages.edges.filter(({ node }) => node?.user?.guid === userId && node.isDeleted === false && node.isSystem === false).map(({ node }) => node.message));
+  const matches = expected.map(message => ownMessages.has(message));
+  if (matches.some(found => !found) && (messages.pageInfo?.hasNextPage !== false || messages.pageInfo?.hasPreviousPage !== false)) throw new P2pError("История чата неполная: требуется проверка доставки ссылки", 409);
+  return matches;
+}
+
+export async function hasSellerChatMessage(chatId: string, message: string): Promise<boolean> {
+  return (await sellerChatMessageMatches(chatId, [message]))[0];
 }
