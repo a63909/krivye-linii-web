@@ -11,8 +11,8 @@ export async function GET(request: Request) {
   const headers = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" };
   try {
     const query = new URL(request.url).searchParams;
-    if (query.getAll("ref").length > 1) throw new PaymentError("Не удалось определить заявку.");
-    const result = await resolvePaymentEntry(query.get("ref")?.trim() || undefined);
+    if (query.getAll("ref").length > 1 || query.getAll("choose").length > 1) throw new PaymentError("Не удалось определить заявку.");
+    const result = await resolvePaymentEntry(query.get("ref")?.trim() || undefined, query.get("choose") === "1");
     return NextResponse.json(result, { status: result.state === "blocked" ? 409 : 200, headers });
   } catch (error) {
     const status = error instanceof PaymentError || error instanceof P2pError ? error.status : 503;

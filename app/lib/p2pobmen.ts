@@ -149,6 +149,20 @@ export async function getMyDeal(id: string): Promise<DealNode | null> {
   return result;
 }
 
+// Public payment selection may search only the seller's currently waiting deals,
+// never historical/closed orders by their enumerable number.
+export async function getMyWaitingDealByNumber(number: string): Promise<DealNode | null> {
+  if (!/^D\d{1,12}$/.test(number)) throw new P2pError("Некорректный номер сделки", 400);
+  const { token, userId } = await session();
+  const data = await graphql<{ exchange?: { deal?: { getDeal?: DealNode | null } } }>("FindWaitingSellerDeal", `query FindWaitingSellerDeal($filter: DealFilter) {
+    exchange { deal { getDeal(filter: $filter) { ${fields} } } }
+  }`, { filter: { number, userIdSeller: userId, state: ["ACCEPTED", "PAID"], isDeleted: false } }, token);
+  const result = data.exchange?.deal?.getDeal;
+  if (result === undefined) throw new P2pError("Не удалось проверить номер сделки");
+  if (!result || result.number?.toUpperCase() !== number || !["ACCEPTED", "PAID"].includes(result.state)) return null;
+  return result;
+}
+
 export async function acceptDeal(id: string): Promise<DealNode | null> {
   requireId(id);
   const { token } = await session();

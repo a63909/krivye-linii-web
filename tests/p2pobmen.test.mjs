@@ -156,9 +156,13 @@ test("NEW seller deal is accepted, billed for exact RUB amount, and receives its
   assert.match(chat.body.variables.input.message, /920\.01 ₽/);
   assert.ok(chat.body.variables.input.message.includes(`https://web.curvedlines.ru/pay/sbp/${paymentId}`));
   assert.match(chat.body.variables.input.message, /Скопируйте ссылку ниже и откройте её в браузере/);
+  assert.match(chat.body.variables.input.message, /Для оплаты нажмите ссылку под QR-кодом/);
+  assert.match(chat.body.variables.input.message, /Запасная персональная ссылка/);
   assert.doesNotMatch(chat.body.variables.input.message, /Нажмите эту ссылку|PDF/);
   assert.doesNotMatch(chat.body.variables.input.message, /https:\/\/yoomoney\.ru\//);
-  assert.doesNotMatch(chat.body.variables.input.message, /ссылку под QR-кодом/);
+  assert.match(chat.body.variables.input.message, /ЗАПОМНИТЕ НОМЕР ВАШЕЙ СДЕЛКИ: 123/);
+  assert.match(chat.body.variables.input.message, /ВЫБЕРИТЕ ИМЕННО СВОЮ СДЕЛКУ № 123 И ПРОВЕРЬТЕ СУММУ 920\.01 ₽/);
+  assert.match(chat.body.variables.input.message, /НЕ ВЫБИРАЙТЕ ТОЛЬКО ПО СУММЕ/);
   assert.equal(result.results[0].payUrl, scenario.payment.confirmation.confirmation_url);
   assert.equal(result.results[0].paymentLink, `https://web.curvedlines.ru/pay/sbp/${paymentId}`);
   assert.ok(calls.indexOf(mutations("SellerDealAccept")[0]) < calls.indexOf(provider));

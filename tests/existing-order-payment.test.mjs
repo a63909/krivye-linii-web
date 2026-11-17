@@ -9,7 +9,7 @@ registerHooks({ resolve(specifier, context, nextResolve) {
     throw error;
   }
 } });
-const { findExistingOrderPayment, parseOrderReference, resolvePaymentEntry } = await import("../app/lib/existing-order-payment.ts");
+const { findExistingOrderPayment, findSelectedOrderPayment, parseOrderReference, resolvePaymentEntry } = await import("../app/lib/existing-order-payment.ts");
 const { GET: activePayment } = await import("../app/api/pay/active/route.ts");
 const dealId = "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa";
 const otherId = "dddddddd-dddd-dddd-dddd-dddddddddddd";
@@ -55,9 +55,13 @@ beforeEach(() => {
     if (body.operationName === "AuthGetUser") return Response.json({ data: { auth: { currentUser: { guid: userId } } } });
     if (body.operationName === "DealsSallerListLoad") {
       assert.deepEqual(body.variables.filter, { state: ["ACCEPTED", "PAID"], userIdSeller: userId, isDeleted: false });
-      assert.equal(body.variables.first, 2);
+      assert.ok([2, 15].includes(body.variables.first));
       const nodes = scenario.active ? scenario.active() : Object.values(scenario.deals).filter(item => ["ACCEPTED", "PAID"].includes(item.state));
-      return Response.json({ data: { exchange: { deal: { getDeals: { edges: nodes.slice(0, 2).map(node => ({ node })) } } } } });
+      return Response.json({ data: { exchange: { deal: { getDeals: { edges: nodes.slice(0, body.variables.first).map(node => ({ node })) } } } } });
+    }
+    if (body.operationName === "FindWaitingSellerDeal") {
+      assert.deepEqual(body.variables.filter, { number: body.variables.filter.number, userIdSeller: userId, state: ["ACCEPTED", "PAID"], isDeleted: false });
+      return Response.json({ data: { exchange: { deal: { getDeal: scenario.numberLookupResult || Object.values(scenario.deals).find(deal => deal.number === body.variables.filter.number) || null } } } });
     }
     assert.equal(body.operationName, "P2pGetDeal");
     assert.equal(body.variables.filter.userIdSeller, userId);
@@ -182,12 +186,13 @@ test("no accepted deal waits for the existing processor without billing or accep
   assert.equal(calls.some(call => call.url.includes("yookassa")), false);
 });
 
-test("two simultaneous accepted deals block the shared link without choosing either buyer", async () => {
+test("two simultaneous accepted deals show explicit choices without selecting or billing either buyer", async () => {
   scenario.deals[otherId] = deal(otherId, "1800.00");
   const result = await resolvePaymentEntry();
-  assert.equal(result.state, "blocked");
+  assert.equal(result.state, "choose");
   assert.equal(result.retryable, false);
   assert.equal(result.confirmationUrl, undefined);
+  assert.deepEqual(result.choices.map(choice => choice.reference), [dealId, otherId]);
   assert.equal(calls.some(call => call.url.includes("yookassa")), false);
   assert.equal(calls.some(call => call.body?.operationName === "P2pGetDeal"), false);
 });
@@ -196,7 +201,7 @@ test("the shared link rechecks concurrency before redirecting if another deal ap
   let reads = 0;
   scenario.active = () => ++reads === 1 ? [deal()] : [deal(), deal(otherId)];
   const result = await resolvePaymentEntry();
-  assert.equal(result.state, "blocked");
+  assert.equal(result.state, "choose");
   assert.equal(result.confirmationUrl, undefined);
 });
 
@@ -217,11 +222,77 @@ test("the readiness endpoint is uncached and read-only, and malformed references
   assert.equal(response.headers.get("cache-control"), "no-store");
   assert.equal((await response.json()).state, "ready");
   scenario.deals[otherId] = deal(otherId);
-  assert.equal((await activePayment(request())).status, 409);
+  assert.equal((await activePayment(request())).status, 200);
   calls.length = 0;
   assert.equal((await activePayment(request("?ref=123"))).status, 400);
   assert.equal((await activePayment(request(`?ref=${dealId}&ref=${otherId}`))).status, 400);
   assert.equal(calls.length, 0);
+});
+
+test("five equal amounts remain separate choices by number and UUID, without buyer or payment details", async () => {
+  scenario.deals = {};
+  const ids = Array.from({ length: 5 }, (_, i) => `${i + 1}`.repeat(8) + "-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+  for (const [i, id] of ids.entries()) scenario.deals[id] = { ...deal(id, "1200.00"), number: `D109730${i}`, email: "private@example.test", fullName: "Private buyer" };
+  const result = await resolvePaymentEntry();
+  assert.equal(result.state, "choose");
+  assert.equal(result.choices.length, 5);
+  assert.deepEqual(result.choices.map(choice => choice.reference), ids);
+  assert.equal(new Set(result.choices.map(choice => choice.orderLabel)).size, 5);
+  assert.ok(result.choices.every(choice => choice.amount === "1200.00"));
+  assert.doesNotMatch(JSON.stringify(result), /private@example|Private buyer|confirmation_url|chat_id/);
+  assert.equal(calls.some(call => call.url.includes("yookassa")), false);
+});
+
+test("refreshing explicit choices never auto-selects the last remaining deal", async () => {
+  const response = await activePayment(new Request("https://web.curvedlines.ru/api/pay/active?choose=1"));
+  const result = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(result.state, "choose");
+  assert.equal(result.choices.length, 1);
+  assert.equal(result.confirmationUrl, undefined);
+  assert.equal(calls.some(call => call.url.includes("yookassa")), false);
+  scenario.deals = {};
+  assert.equal((await resolvePaymentEntry(undefined, true)).choices.length, 0);
+});
+
+test("the selection form accepts an exact waiting deal number, optional D/# and full UUID", async () => {
+  scenario.deals[dealId].number = "D1097367";
+  for (const input of ["D1097367", "d1097367", "1097367", "# D1097367", dealId]) {
+    const selected = await findSelectedOrderPayment(input);
+    assert.equal(selected.reference, dealId);
+    assert.equal(selected.payment.orderLabel, "D1097367");
+    assert.equal(selected.payment.amount, "1200.00");
+    assert.equal(selected.payment.state, "pending");
+  }
+  scenario.deals[otherId] = { ...deal(otherId), number: "D1097368" };
+  scenario.payments.push({ ...payment(otherId), id: "12345678-1234-1234-1234-012345678901" });
+  assert.equal((await findSelectedOrderPayment("D1097368")).reference, otherId);
+});
+
+test("number search rejects historical, missing, partial matches and malformed input", async () => {
+  for (const input of ["", "x".repeat(81), "D1 OR 1=1", "https://evil.test/", "D123x"]) {
+    await assert.rejects(findSelectedOrderPayment(input));
+  }
+  assert.equal(calls.length, 0);
+  await assert.rejects(findSelectedOrderPayment("D9999999"), /Ожидающая сделка не найдена/);
+  scenario.numberLookupResult = { ...deal(), number: "D12345" };
+  await assert.rejects(findSelectedOrderPayment("D123"), /Ожидающая сделка не найдена/);
+  for (const state of ["CLOSED", "CANCELLED", "NEW", "PAID_CONFIRMED"]) {
+    scenario.numberLookupResult = { ...deal(), number: "D123", state };
+    await assert.rejects(findSelectedOrderPayment("D123"), /Ожидающая сделка не найдена/);
+  }
+  assert.equal(calls.some(call => call.url.includes("yookassa")), false);
+});
+
+test("confirmation revalidates the selected deal instead of switching to another equal-amount deal", async () => {
+  scenario.deals[otherId] = deal(otherId);
+  scenario.payments.push({ ...payment(otherId), id: "12345678-1234-1234-1234-012345678901" });
+  const selection = await findSelectedOrderPayment(dealId);
+  scenario.deals[dealId].state = "CANCELLED";
+  const result = await resolvePaymentEntry(selection.reference);
+  assert.equal(result.state, "blocked");
+  assert.equal(result.confirmationUrl, undefined);
+  assert.equal((await resolvePaymentEntry(otherId)).state, "ready");
 });
 
 test("a personal reference continues to resolve its own deal when several deals are active", async () => {
